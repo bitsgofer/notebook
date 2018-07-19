@@ -26,10 +26,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	http.HandleFunc("/nb1", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		nb.RenderHTML(w)
-	})
+	// http.HandleFunc("/nb1", func(w http.ResponseWriter, r *http.Request) {
+	// 	w.WriteHeader(http.StatusOK)
+	// 	nb.RenderHTML(w)
+	// })
+	http.HandleFunc("/", nb.HTTPHandler())
 
 	glog.Warningf("listening on %s", addr)
 	if err := http.ListenAndServe(addr, nil); err != nil {

@@ -12,9 +12,9 @@ test:
 .PHONY: test
 
 gen:
-	go run cmd/static-gen/main.go --stderrthreshold=INFO --dir=in/ --out=out/ --template=template/template.html
+	go run cmd/static-gen/main.go --stderrthreshold=INFO --dir=example/markdown/ --out=example/public_html/ --template=example/template/template.html
 .PHONY: gen
 
 run:
-	 go run cmd/blog-server/main.go --root=out/ --stderrthreshold=INFO
+	 go run cmd/blog-server/main.go --root=example/public_html/ --stderrthreshold=INFO
 .PHONY: run

@@ -47,6 +47,7 @@ func TestNew(t *testing.T) {
 				Filename: caller + "/testdata/happy.md",
 				Metadata: Metadata{
 					Title:       "untitled",
+					Slug:        "untitled",
 					Author:      "mark",
 					PublishedAt: mustParseRFC3339ToUTC("2018-07-21T08:00:00+08:00"),
 					Sticky:      true,

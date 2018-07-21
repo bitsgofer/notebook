@@ -19,6 +19,7 @@ type Metadata struct {
 	Author      string
 	PublishedAt time.Time
 	Title       string
+	Slug        string
 	Sticky      bool
 	Tags        []string
 }
@@ -27,6 +28,7 @@ type metdataYAML struct {
 	Author      string   `yaml:"author"`
 	PublishedAt string   `yaml:"published"`
 	Title       string   `yaml:"title"`
+	Slug        string   `yaml:"slug"`
 	Sticky      bool     `yaml:"sticky"`
 	Tags        []string `yaml:"tags"`
 }
@@ -73,7 +75,7 @@ func New(fname string) (*Post, error) {
 
 func (p *Post) CanonicalPath() string {
 	yyyy, mm, dd := p.Metadata.PublishedAt.Date()
-	return fmt.Sprintf("%04d/%02d/%02d/%s", yyyy, mm, dd, p.Metadata.Title)
+	return fmt.Sprintf("%04d/%02d/%02d/%s", yyyy, mm, dd, p.Metadata.Slug)
 }
 
 func (p *Post) ParentPath() string {
@@ -119,6 +121,7 @@ func decodeMetadata(raw []byte) (Metadata, error) {
 	return Metadata{
 		Author:      base.Author,
 		Title:       base.Title,
+		Slug:        base.Slug,
 		PublishedAt: publishedAt.UTC(),
 		Sticky:      base.Sticky,
 		Tags:        base.Tags, // moved

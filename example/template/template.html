@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<link rel="stylesheet" href="/mini-default.css">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>{{.Metadata.Title}}</title>
+</head>
+
+<body>
+	<header class="row">
+		<a href="#" class="logo">>_</a>
+		<a href="#" class="button">Home</a>
+		<a href="#" class="button">Labs</a>
+		<a href="#" class="button">About</a>
+	</header>
+
+	<div class="row" id="doc-wrapper">
+		<div class="col-md-2 col-lg-2"></div>
+		<main class="col-sm-12 col-md-8 col-lg-8" id="doc-content">
+			<article>{{.HTML}}</article>
+		</main>
+		<div class="col-md-2 col-lg-2"></div>
+	</div>
+</body>
+
+</html>

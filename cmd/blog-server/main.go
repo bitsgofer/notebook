@@ -13,9 +13,10 @@ import (
 
 func main() {
 	var root string
-	addr := ":8080"
+	var addr string
 
 	flag.StringVar(&root, "root", "public_html", "root of blog")
+	flag.StringVar(&addr, "addr", ":80", "listening addr")
 
 	flag.Parse()
 

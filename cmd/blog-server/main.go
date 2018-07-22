@@ -14,9 +14,13 @@ import (
 func main() {
 	var root string
 	var addr string
+	var tlsKeyFile string
+	var tlsCertFile string
 
 	flag.StringVar(&root, "root", "public_html", "root of blog")
 	flag.StringVar(&addr, "addr", ":80", "listening addr")
+	flag.StringVar(&tlsKeyFile, "tls.key", "/path/to/key", "SSL's private key file")
+	flag.StringVar(&tlsCertFile, "tls.cert", "/path/to/cert", "SSL's private cert file")
 
 	flag.Parse()
 
@@ -26,7 +30,7 @@ func main() {
 
 	http.HandleFunc("/", srv.handler)
 	glog.Infof(addr)
-	if err := http.ListenAndServe(addr, nil); err != nil {
+	if err := http.ListenAndServeTLS(addr, tlsCertFile, tlsKeyFile, nil); err != nil {
 		glog.Errorf("cannot serve; err= %v", err)
 	}
 }

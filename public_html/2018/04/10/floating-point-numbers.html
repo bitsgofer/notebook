@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<link rel="stylesheet" href="/mini-default.css">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Floating point numbers</title>
+</head>
+
+<body>
+	<header class="row">
+		<a href="#" class="logo">>_</a>
+		<a href="#" class="button">Home</a>
+		<a href="#" class="button">Labs</a>
+		<a href="#" class="button">About</a>
+	</header>
+
+	<div class="row" id="doc-wrapper">
+		<div class="col-md-2 col-lg-2"></div>
+		<main class="col-sm-12 col-md-8 col-lg-8" id="doc-content">
+			<article><p>Recently, one of my colleagues tried to write the value <code>0.1</code> into <code>OpenTSDB</code> but
+got <code>0.100000001490116</code> when querying it back.</p>
+
+<p>{% highlight bash %}
+$&gt; echo &ldquo;run OpenTSDB, listening on :4242&rdquo;</p>
+
+<p>$&gt; echo &ldquo;write 0.1&rdquo;
+$&gt; curl -sX POST &lsquo;127.0.0.1:/4242/api/put&rsquo; <br />
+        -H &lsquo;Content-Type: application/json&rsquo; <br />
+        -d &lsquo;[{&ldquo;metric&rdquo;:&ldquo;test&rdquo;,&ldquo;tags&rdquo;:{&ldquo;k&rdquo;:&ldquo;v&rdquo;},&ldquo;timestamp&rdquo;:1523353120,&ldquo;value&rdquo;:0.1}]&rsquo; <br />
+        -i
+HTTP/1.1 204 No Content</p>
+
+<p>$&gt; echo &ldquo;query back&rdquo;
+$&gt; curl -sX POST &lsquo;127.0.0.1:/4242/api/query&rsquo; <br />
+        -H &lsquo;Content-Type: application/json&rsquo; <br />
+        -d &lsquo;{&ldquo;start&rdquo;:1523353100,&ldquo;end&rdquo;:1523353140,&ldquo;queries&rdquo;:[{&ldquo;metric&rdquo;:&ldquo;test&rdquo;,&ldquo;tags&rdquo;:{&ldquo;k&rdquo;:&ldquo;v&rdquo;},&ldquo;aggregator&rdquo;:&ldquo;none&rdquo;}]}&rsquo; <br />
+        | json_pp
+[
+	{
+		&ldquo;aggregateTags&rdquo;: [],
+		&ldquo;metric&rdquo;: &ldquo;test&rdquo;,
+		&ldquo;tags&rdquo;: {
+			&ldquo;k&rdquo;: &ldquo;v&rdquo;
+		},
+		&ldquo;dps&rdquo;: {
+			&ldquo;1523353120&rdquo;: 0.100000001490116
+		}
+	}
+]
+{% endhighlight %}</p>
+
+<p>The thus a series of WTF commenced.</p>
+
+<p>Eventually, we figured out what happened, which was because <code>OpenTSDB 2.3.0</code>, the version we used,
+only use 32 bits to store the floating point numbers.</p>
+
+<p>From the process, it seems there are some fundamental facts about floating point that engineers should know.
+There are many soures on this, such as:
+- <a href="https://dl.acm.org/citation.cfm?id=103163">What every computer scientist should know about floating-point arithmetic</a>
+  <br/>or <a href="https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html">alternative link</a>
+- <a href="https://ieeexplore.ieee.org/document/4610935/">IEEE 754-2008</a>
+  <br/>or <a href="http://eng.umb.edu/~cuckov/classes/engin341/Reference/IEEE754.pdf">alternative link</a>
+- <a href="http://floating-point-gui.de">http://floating-point-gui.de</a></p>
+
+<p>However, I still feel those sources doesn&rsquo;t explain it clear enough for a confused person to understand.
+So this is another stab at it.</p>
+
+<blockquote>
+<p>Disclaimer: there&rsquo;s a lot of corner cases with floating point math, this article might miss
+them, still</p>
+</blockquote>
+
+<h1>TL,DR</h1>
+
+<ol>
+<li>Most real numbers can&rsquo;t be stored accurately in a computer.</li>
+<li>They get approximated, usually using a 32-bit or 64-bit representations.</li>
+<li>Once approximated, you should round/truncate on display and comparison, but NEVER on calculation.</li>
+<li>If you use either 32-bit or 64-bit, keep it consistent across your system.</li>
+</ol>
+
+<hr />
+
+<h1>What a confused programmers should remember about floating point numbers</h1>
+
+<h2>Terms</h2>
+
+<ul>
+<li><code>integers</code>: numbers with no decimal digits (e.g: <code>0</code>, <code>1</code>, <code>99999</code>, etc)</li>
+<li><code>real numbers</code>: numbers in the set ℝ</li>
+<li><code>floating point numers</code>: representation of a <code>real number</code> in computer, stored in <strong>N</strong> bits of memory</li>
+<li><code>float</code>, <code>float32</code>: <code>floating point numbers</code> stored in <strong>32 bits</strong></li>
+<li><code>double</code>, <code>float64</code>: <code>floating point numbers</code> stored in <strong>64 bits</strong></li>
+</ul>
+
+<h2>1. There is not enough bits to represent real numbers</h2>
+
+<p>Recall that when working with <code>integers</code>, you also have a limited range
+(e.g: <code>-128 - +127</code> for <code>int8</code>) due to bits limit.
+The same problem presents itself with <code>real numbers</code>, since you have to cram an infinite amount
+of numbers within ℝ into <strong>N bits</strong>.</p>
+
+<p>Unlike <code>integers</code> where there is an exactly amount of numbers between 2 <code>integer</code> values,
+(e.g: only 1 number between <code>0</code> and <code>1</code>),
+there is an infinite amount of numbers between two <code>real numbers</code>.
+For example, between <code>0.0</code> and <code>0.1</code>, there can be <code>0.01</code>, <code>0.001</code>, <code>0.00000000001</code>, etc.</p>
+
+<p>This means it&rsquo;s impossible to fit any range of <code>real numbers</code> into 32 or 64 bits.</p>
+
+<h2>2. Real numbers are represented using 3 integers: sign, significant precision and exponent</h2>
+
+<p>Recall that you can express <code>integers</code> as sum of powers of 2, e.g:</p>
+
+<p>{% highlight bash %}
+15 = 8 + 4 + 2 + 1 = 1 * 2^3 + 1 * 2^2 + 1 * 2^z + 1 * 2^0
+{% endhighlight %}</p>
+
+<p>Real numbers is also expressed in somewhat similar way:</p>
+
+<p>{% highlight bash %}
+usually = (-1)^sign * 2^(exponent-1023) * 1.significant
+or      = (-1)^sign * 2^-1022           * 0.significant        (very small numbers)
+{% endhighlight %}</p>
+
+<p>Basically, we partition the N bits into 3 parts to represent 3 integers:
+- sign
+- exponent
+- significant precision</p>
+
+<p>The exact number of bits used per part are:</p>
+
+<p>{% highlight bash %}
+| type    | sign | exponent | significant precision |
+|&mdash;&mdash;&mdash;|&mdash;&mdash;|&mdash;&mdash;&mdash;-|&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&ndash;|
+| 32-bit  |    1 |        8 |                    23 |
+| 64-bit  |    1 |       11 |                    52 |
+{% endhighlight %}</p>
+
+<p>For example, in 64 bits format:</p>
+
+<p>{% highlight bash %}
+| value  | sign | exponent    | significant precision                                |
+|&mdash;&mdash;&ndash;|&mdash;&mdash;|&mdash;&mdash;&mdash;&mdash;-|&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;|
+|    0.5 |    0 | 01111111110 | 0000000000000000000000000000000000000000000000000000 |
+|        |    0 |        1022 |                                                    0 |
+|&mdash;&mdash;&ndash;|&mdash;&mdash;|&mdash;&mdash;&mdash;&mdash;-|&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;|
+|  -64.5 |    1 | 10000000101 | 0000001000000000000000000000000000000000000000000000 |
+|        |    1 |        1029 |                                       35184372088832 |
+|&mdash;&mdash;&ndash;|&mdash;&mdash;|&mdash;&mdash;&mdash;&mdash;-|&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;|
+|  112.1 |    0 | 10000000101 | 1100000001100110011001100110011001100110011001100110 |
+| approx |    0 |        1030 |                                     3384736594945638 |
+{% endhighlight %}</p>
+
+<h2>3. Many real numbers can only be approximated in floating point format</h2>
+
+<p>From the examples above, if you work the representation of 112.1 backwards, you will only get
+around <code>112.099999999999994315658113919</code>.</p>
+
+<p>This represents the most critical part about <code>floating point numbers</code>: they are mostly approximations.</p>
+
+<p>Unlike <code>integers</code>, most <code>floating point numbers</code> doesn&rsquo;t have an exact representation
+in binary systems. An iconic example is <code>0.1</code>, illustrated here:</p>
+
+<p>{% highlight go %}
+func main() {
+	fmt.Printf(&ldquo;%0.64f\n&rdquo;, 0.1)
+}</p>
+
+<p>-&gt;</p>
+
+<p>0.1000000000000000055511151231257827021181583404541015625000000000
+{% endhighlight %}</p>
+
+<h2>4. Rounding/truncation doesn&rsquo;t help with retaining precision</h2>
+
+<p>During our confusion about <code>OpenTSDB</code>&rsquo;s behavior, one of my colleagues suggested to round or
+truncate the result read, up to 5 decimal digits.</p>
+
+<p>It seems to work, but actually is a bad way to deal with floating point numbers.</p>
+
+<p>First, because there&rsquo;s no way you can represent <code>0.1</code>, rounding/truncating doesn&rsquo;t reall change this.
+You will get another approximated number.</p>
+
+<p>Secondly, consider this code that simulate the effect of rounding.</p>
+
+<p>{% highlight go %}
+package main</p>
+
+<p>import (
+	&ldquo;fmt&rdquo;</p>
+
+<pre><code>&quot;gonum.org/v1/gonum/floats&quot;
+</code></pre>
+
+<p>)</p>
+
+<p>func main() {
+	var x float64 = 0.1</p>
+
+<pre><code>const n = 5
+const precision = 5
+
+fmt.Println(&quot;multiply:&quot;)
+for i := 0; i &lt; n; i++ {
+	x = floats.Round(x, precision)
+	x *= float64(0.1)
+	fmt.Printf(&quot;%0.64f\n&quot;, x)
+}
+
+fmt.Println(&quot;divide:&quot;)
+for i := 0; i &lt; n; i++ {
+	x = floats.Round(x, precision)
+	x /= float64(0.1)
+	fmt.Printf(&quot;%0.64f\n&quot;, x)
+}
+
+fmt.Printf(&quot;%0.64f\n&quot;, x)
+</code></pre>
+
+<p>}
+{% endhighlight %}</p>
+
+<p>{% highlight go %}
+multiply:
+0.0100000000000000019428902930940239457413554191589355468750000000
+0.0010000000000000000208166817117216851329430937767028808593750000
+0.0001000000000000000047921736023859295983129413798451423645019531
+0.0000100000000000000008180305391403130954586231382563710212707520
+0.0000010000000000000001665063486394613434526945638936012983322144</p>
+
+<p>divide:
+0.0000000000000000000000000000000000000000000000000000000000000000
+0.0000000000000000000000000000000000000000000000000000000000000000
+0.0000000000000000000000000000000000000000000000000000000000000000
+0.0000000000000000000000000000000000000000000000000000000000000000
+0.0000000000000000000000000000000000000000000000000000000000000000
+0.0000000000000000000000000000000000000000000000000000000000000000
+{% endhighlight %}</p>
+
+<p>Mathematically, you would expect to get <code>0.1</code> afterwards, but got <code>0</code> instead.</p>
+
+<p>By rounding/truncating, you have lost more info in the <code>significant precision</code> bits
+(i.e: used less than the amount of available bits).</p>
+
+<p>The bottom line is: if it&rsquo;s already a float, don&rsquo;t try to round/truncate it when doing computaion.</p>
+
+<h2>5. However, rounding/truncate help when you are displaying and comparing</h2>
+
+<p>Now, if the user enter <code>0.1</code> into your program, what should you display back?
+If you show them <code>0.1000000000000000055511151231257827021181583404541015625</code>, they will surely
+be suprised (everyone is trained in math, but not many knows how computer store numbers, sadly).</p>
+
+<p>Hence, you will probably need to round this off so it looks like <code>0.1</code>.</p>
+
+<p>Similarly, when you are comparing 2 expressions, they might be giving a
+<a href="https://www.urbandictionary.com/define.php?term=same%20same%20but%20different">&ldquo;same same but different&rdquo;</a>
+result.</p>
+
+<blockquote>
+<p>TODO(mark): lookup for an example to illustrate here</p>
+</blockquote>
+
+<p>You would also want to round/truncate things, upto a certain decimal digits there.</p>
+
+<h2>6. Keep the bit size consistent across your system</h2>
+
+<p>This is our problem when using <code>OpenTSDB 2.3.0</code>. Consider this flow:</p>
+
+<ol>
+<li>User enter <code>0.1</code> in front-end code</li>
+<li>Front-end encode <code>0.1</code> to JSON, sends to backend API</li>
+<li>Backend API parse <code>0.1</code> in JSON, store as 64-bit approximation</li>
+<li>Backend API encode the &ldquo;approximated&rdquo; <code>0.1</code> to JSON, sends to OpenTSDB via HTTP API</li>
+<li>OpenTSDB parse <code>0.1</code> in JSON, <strong>store as 32-bit approximation</strong></li>
+<li>OpenTSDB encode 32-bit approximated value of <code>0.1</code> into JSON and send to backend</li>
+</ol>
+
+<p>At step 5, our <code>OpenTSDB</code> breaks the convention. It truncates the significant precision bits.</p>
+
+<p>When the result comes back and our backend try to store is value into 64-bit format, it thinks
+that is a different number. There would be no problem if everyone uses th IEEE standard for 64-bit
+<code>floating point numbers</code>.</p>
+
+<p>This is an important point to remember when you write your own binary/JSON encoder/decoder
+(or anything that deals with binary representation, for that matter). You <strong>MUST</strong> conform to
+the standard to prevent nasty suprises.</p>
+
+<p>We decided to upgrade our <code>OpenTSDB</code> to <code>2.4.0RC2</code>, because we do need 64-bit representation.</p>
+
+<h2>7. Floating point math is hard, read plenty articles</h2>
+
+<p>Read the IEEE standard, blog posts from other people, run experiment with your code AND pen
+and paper.</p>
+
+<p>Alaways be alert when it comes to floating point math :)</p>
+</article>
+		</main>
+		<div class="col-md-2 col-lg-2"></div>
+	</div>
+</body>
+
+</html>

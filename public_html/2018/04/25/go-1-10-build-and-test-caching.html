@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<link rel="stylesheet" href="/mini-default.css">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Go 1.10 build &amp; test caching</title>
+</head>
+
+<body>
+	<header class="row">
+		<a href="#" class="logo">>_</a>
+		<a href="#" class="button">Home</a>
+		<a href="#" class="button">Labs</a>
+		<a href="#" class="button">About</a>
+	</header>
+
+	<div class="row" id="doc-wrapper">
+		<div class="col-md-2 col-lg-2"></div>
+		<main class="col-sm-12 col-md-8 col-lg-8" id="doc-content">
+			<article><p>Since I didn&rsquo;t read the release note for 1.10, I &ldquo;accidentally&rdquo; discovered a new feature in Go 1.10:
+build &amp; test caching.</p>
+
+<p>Basically, the 1.10 release do these things:</p>
+
+<ul>
+<li>Cache the result of <code>go build</code>, <code>go run</code> and <code>go test</code> in <code>$HOME/.cache</code>.</li>
+<li>When they way your program run changes (usually, when source code change or when some flags is used
+differently), the cache is rebuilt.</li>
+<li>New builds will take advantage of the cache to only do incremental build.</li>
+<li>Similarly, if the way your test code run haven&rsquo;t changed, <code>go test</code> will print the previous test&rsquo;s result.</li>
+</ul>
+
+<p>I learn of this when running a test that is dependent on <code>postgres</code>. After I have stopped the PG server,
+the test still pass. This resulted in a good hour debugging and checking with a coworker that I am not
+imagining things.</p>
+
+<p>The feature doesn&rsquo;t feel very welcoming at first, plus, I was worried about tests that:
+- Depends on communication over network
+- Use content from a file/env variable.</p>
+
+<p>Then I realized I have been running Go 1.10 for more than a month without any problems. This prompt
+for more reading on <code>go-nuts</code> and I discovered a great thing: the Go team has taken
+a lot of work to ensure that opening files and reading environment variable also invalidates the
+test&rsquo;s cache. However, they have also explicity not try to handle all network-related one.</p>
+
+<p>Actually, it is not a new approach (Makefile has taken the incremental build approach, but it can&rsquo;t
+cache test result). Furthermore, the underlying problem is <strong>cache invalidation</strong>, and it&rsquo;s hard.</p>
+
+<p>The more I read &amp; think about it, the more it start to make sense. In the end, it started to feel
+okay after a while.</p>
+
+<p>An interesting thought is the test cahing seems to be good for unit-like tests, where we can control
+all inputs (exhausive). We can surely disable the cache, but if it&rsquo;s design that way, we can take
+advantage of most Go&rsquo;s feature.</p>
+</article>
+		</main>
+		<div class="col-md-2 col-lg-2"></div>
+	</div>
+</body>
+
+</html>

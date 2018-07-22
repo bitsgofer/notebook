@@ -1,4 +1,4 @@
-_root_dir=github.com/exklamationmark/notebook
+_pkg=github.com/exklamationmark/notebook
 
 PKG=./...
 RUN=
@@ -7,14 +7,20 @@ ifneq ("$(RUN)","")
 endif
 GLOG=
 test:
-	go test -cover -v -race $(_root_dir)/$(PKG) ${_go_test_run_flag} $(GLOG)
-	go vet $(_root_dir)/$(PKG)
+	go test -cover -v -race $(_pkg)/$(PKG) ${_go_test_run_flag} $(GLOG)
+	go vet $(_pkg)/$(PKG)
 .PHONY: test
 
+build:
+	mkdir -p build
+	go build -o  build/static-gen ${_pkg}/cmd/static-gen
+	go build -o  build/blog-server ${_pkg}/cmd/blog-server
+.PHONY: build
+
 gen:
-	go run cmd/static-gen/main.go --stderrthreshold=INFO --dir=example/markdown/ --out=example/public_html/ --template=example/template/template.html
+	go run cmd/static-gen/main.go --stderrthreshold=INFO --dir=posts/ --out=public_html/ --template=template.html
 .PHONY: gen
 
 run:
-	 go run cmd/blog-server/main.go --root=example/public_html/ --stderrthreshold=INFO
+	 go run cmd/blog-server/main.go --root=public_html/ --stderrthreshold=INFO
 .PHONY: run

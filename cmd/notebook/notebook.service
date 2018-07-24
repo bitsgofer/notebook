@@ -1,0 +1,14 @@
+[Unit]
+Description=Notebook blog server
+
+[Service]
+PIDFile=/var/run/notebook.pid
+ExecStart=/opt/notebook serve \
+	--production \
+	--domains=www.example.com,example.com \
+	--admin.email='admin@example.com'
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
+

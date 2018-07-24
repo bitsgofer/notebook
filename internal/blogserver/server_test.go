@@ -1,35 +1,12 @@
 package blogserver
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
-
-// func TestNewServer(t *testing.T) {
-// 	srv, err := New()
-// 	if err != nil {
-// 	}
-//
-// 	// check srv
-// }
-//
-// func TestHTTPHandler(t *testing.T) {
-// 	// call srv.HTTPHandler -> func(http.ResponseWriter, *http.Request)
-// 	// it should handle ACME + redirects the rest to HTTPS
-// }
-//
-// func TestHTTPHandler(t *testing.T) {
-// 	// create srv with a custom handler
-// 	// call srv.HTTPSHandler -> same as the custom handler
-// }
-//
-// func TestReload(t *testing.T) {
-// 	// modify root dir
-// 	// call srv.Reload()
-// 	// check that newly generated is okay
-// }
 
 func TestBlogHandlerServeFile(t *testing.T) {
 	rootDir := "testdata"
@@ -108,7 +85,6 @@ func TestBlogHandlerServeFile(t *testing.T) {
 }
 
 func TestBlogHandlerServeError(t *testing.T) {
-	rootDir := "testdata"
 	var testCases = []struct {
 		name           string
 		method         string
@@ -135,7 +111,7 @@ func TestBlogHandlerServeError(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			serveFile = func(w http.ResponseWriter, r *http.Request, fname string) {} // NOP
-			handler := blogHandler(rootDir)
+			handler := blogHandler("testdata")
 
 			req := httptest.NewRequest(tc.method, tc.path, nil)
 			w := httptest.NewRecorder()
@@ -150,5 +126,89 @@ func TestBlogHandlerServeError(t *testing.T) {
 				t.Errorf("wrote wrong body,\n  want= %q\n   got= %q", want, got)
 			}
 		})
+	}
+}
+
+func TestServeErrPage(t *testing.T) {
+	var testCases = []struct {
+		status         int
+		expectedStatus int
+		expectedBody   string
+	}{
+		{
+			status:         http.StatusNotFound,
+			expectedStatus: http.StatusNotFound,
+			expectedBody:   "<html><h1>Not found</h1><p>Sorry, but our princess is in another castle</p></html>",
+		},
+		{
+			status:         http.StatusBadRequest,
+			expectedStatus: http.StatusBadRequest,
+			expectedBody:   "<html><h1>Bad request</h1><p>Sorry, this we can't serve this</p></html>",
+		},
+		{
+			status:         http.StatusInternalServerError,
+			expectedStatus: http.StatusInternalServerError,
+			expectedBody:   "<html><h1>Internal server error</h1><p>Sorry, something went wrong</p></html>",
+		},
+		{
+			status:         600,
+			expectedStatus: http.StatusInternalServerError,
+			expectedBody:   "<html><h1>Internal server error</h1><p>Sorry, something went wrong</p></html>",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(fmt.Sprint(tc.status), func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			w := httptest.NewRecorder()
+
+			serveErrPage(w, req, tc.status)
+			resp := w.Result()
+			if want, got := tc.expectedStatus, resp.StatusCode; want != got {
+				t.Errorf("wrote wrong HTTP status, want= %v, got= %v", want, got)
+			}
+			body, _ := ioutil.ReadAll(resp.Body)
+			if want, got := tc.expectedBody, string(body); want != got {
+				t.Errorf("wrote wrong body,\n  want= %q\n   got= %q", want, got)
+			}
+		})
+	}
+}
+
+func TestHTTPHandler(t *testing.T) {
+	srv, _ := New("testdata", "admin@example.com", "example.com", "www.exampleb.com")
+	path := "example.com/somewhere"
+	req := httptest.NewRequest(http.MethodGet, "http://"+path, nil)
+	w := httptest.NewRecorder()
+
+	srv.HTTPHandler().ServeHTTP(w, req)
+	resp := w.Result()
+	if want, got := http.StatusFound, resp.StatusCode; want != got {
+		t.Errorf("wrote wrong HTTP status, want= %v, got= %v", want, got)
+	}
+	if want, got := "https://"+path, resp.Header.Get("Location"); want != got {
+		t.Errorf("wrote wrong Location header, want= %v, got= %v", want, got)
+	}
+}
+
+func TestHTTPSHandler(t *testing.T) {
+	serveFile = func(w http.ResponseWriter, r *http.Request, fname string) {
+		http.ServeFile(w, r, fname)
+	}
+
+	srv, _ := New("testdata", "admin@example.com", "example.com", "www.exampleb.com")
+	path := "example.com/sample"
+	req := httptest.NewRequest(http.MethodGet, "https://"+path, nil)
+	w := httptest.NewRecorder()
+	expectedBody := "<html><head></head><body><h1>sample</h1><p>body</p></body></html>"
+
+	srv.HTTPSHandler().ServeHTTP(w, req)
+	resp := w.Result()
+	if want, got := http.StatusOK, resp.StatusCode; want != got {
+		t.Errorf("wrote wrong HTTP status, want= %v, got= %v", want, got)
+	}
+	body, _ := ioutil.ReadAll(resp.Body)
+	if want, got := expectedBody, string(body); want != got {
+		t.Errorf("wrote wrong body,\n  want= %q\n   got= %q", want, got)
 	}
 }

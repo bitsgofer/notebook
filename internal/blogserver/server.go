@@ -11,20 +11,17 @@ import (
 )
 
 type config struct {
-	domains []string
 	rootDir string
 }
 
 type server struct {
 	config
 	acmeManager *autocert.Manager
-	mux         *http.ServeMux
 }
 
 func New(rootDir, adminEmail string, domains ...string) (*server, error) {
 	c := config{
 		rootDir: rootDir,
-		domains: domains,
 	}
 
 	manager := autocert.Manager{
@@ -34,33 +31,25 @@ func New(rootDir, adminEmail string, domains ...string) (*server, error) {
 		Email:      adminEmail,
 	}
 
-	mux := http.NewServeMux()
-
 	return &server{
 		config:      c,
 		acmeManager: &manager,
-		mux:         mux,
 	}, nil
 }
 
-// func (srv *server) HTTPHandler() http.Handler {
-// }
-//
-// func (srv *server) ServeBlog(w http.ResponseWriter, r *http.Request) {
-// 	if r.Method != http.MethodGet {
-// 		w.WriteHeader(http.StatusBadRequest)
-// 		return
-// 	}
-//
-// 	fname := fileToServe(srv.config.rootDir, r.Path)
-// 	// serveFile(w, r, file)
-// }
+func (srv *server) HTTPHandler() http.Handler {
+	return srv.acmeManager.HTTPHandler(nil)
+}
+
+func (srv *server) HTTPSHandler() http.Handler {
+	return http.HandlerFunc(blogHandler(srv.config.rootDir))
+}
 
 var (
 	defaultResponses = map[int][]byte{
 		http.StatusInternalServerError: []byte("<html><h1>Internal server error</h1><p>Sorry, something went wrong</p></html>"),
 		http.StatusNotFound:            []byte("<html><h1>Not found</h1><p>Sorry, but our princess is in another castle</p></html>"),
-		http.StatusBadRequest:          []byte("<html><h1>Bad request</h1><p>Sorry, did you meant to send a GET?</p></html>"),
+		http.StatusBadRequest:          []byte("<html><h1>Bad request</h1><p>Sorry, this we can't serve this</p></html>"),
 	}
 )
 
@@ -89,10 +78,6 @@ func fileToServe(rootDir, path string) string {
 	}
 }
 
-var serveFile = func(w http.ResponseWriter, r *http.Request, fname string) {
-	http.ServeFile(w, r, fname)
-}
-
 func blogHandler(rootDir string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
@@ -116,4 +101,8 @@ func blogHandler(rootDir string) func(http.ResponseWriter, *http.Request) {
 		serveFile(w, r, fname)
 		glog.V(0).Infof("served %q", fname)
 	}
+}
+
+var serveFile = func(w http.ResponseWriter, r *http.Request, fname string) {
+	http.ServeFile(w, r, fname)
 }

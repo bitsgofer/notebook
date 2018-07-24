@@ -13,8 +13,7 @@ test:
 
 build:
 	mkdir -p build
-	go build -o  build/static-gen ${_pkg}/cmd/static-gen
-	go build -o  build/blog-server ${_pkg}/cmd/blog-server
+	go build -o  build/notebook ${_pkg}/cmd/notebook
 .PHONY: build
 
 gen:

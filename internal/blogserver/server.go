@@ -1,6 +1,7 @@
 package blogserver
 
 import (
+	"crypto/tls"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -37,12 +38,27 @@ func New(rootDir, adminEmail string, domains ...string) (*server, error) {
 	}, nil
 }
 
-func (srv *server) HTTPHandler() http.Handler {
+func (srv *server) httpHandler() http.Handler {
 	return srv.acmeManager.HTTPHandler(nil)
 }
 
-func (srv *server) HTTPSHandler() http.Handler {
+func (srv *server) httpsHandler() http.Handler {
 	return http.HandlerFunc(blogHandler(srv.config.rootDir))
+}
+
+func (srv *server) HTTPServer() *http.Server {
+	return &http.Server{
+		Handler: srv.httpHandler(),
+	}
+}
+
+func (srv *server) HTTPSServer() *http.Server {
+	return &http.Server{
+		Handler: srv.httpsHandler(),
+		TLSConfig: &tls.Config{
+			GetCertificate: srv.acmeManager.GetCertificate,
+		},
+	}
 }
 
 var (

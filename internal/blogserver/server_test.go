@@ -181,7 +181,7 @@ func TestHTTPHandler(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "http://"+path, nil)
 	w := httptest.NewRecorder()
 
-	srv.HTTPHandler().ServeHTTP(w, req)
+	srv.httpHandler().ServeHTTP(w, req)
 	resp := w.Result()
 	if want, got := http.StatusFound, resp.StatusCode; want != got {
 		t.Errorf("wrote wrong HTTP status, want= %v, got= %v", want, got)
@@ -202,7 +202,7 @@ func TestHTTPSHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 	expectedBody := "<html><head></head><body><h1>sample</h1><p>body</p></body></html>"
 
-	srv.HTTPSHandler().ServeHTTP(w, req)
+	srv.httpsHandler().ServeHTTP(w, req)
 	resp := w.Result()
 	if want, got := http.StatusOK, resp.StatusCode; want != got {
 		t.Errorf("wrote wrong HTTP status, want= %v, got= %v", want, got)

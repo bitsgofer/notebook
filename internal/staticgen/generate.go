@@ -43,7 +43,7 @@ func generateIndex(outDir string, tmpl *template.Template, posts []*post.Post) e
 	buf.WriteString("<h1>Notes</h1>\n")
 	buf.WriteString("<ul>\n")
 	for _, p := range posts {
-		path := "/" + outDir + "/" + p.CanonicalPath()
+		path := "/" + p.CanonicalPath()
 		buf.WriteString(fmt.Sprintf("<li><a href=\"%s\">%s</a></li>\n", path, p.Metadata.Title))
 	}
 	buf.WriteString("</ul>\n")

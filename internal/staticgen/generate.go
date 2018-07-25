@@ -1,10 +1,12 @@
 package staticgen
 
 import (
+	"bytes"
 	"fmt"
 	"html/template"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/exklamationmark/glog"
@@ -20,14 +22,48 @@ func Generate(postDir, postTemplate, htmlDir string) error {
 
 	htmlDir = strings.TrimRight(htmlDir, "/")
 
-	if err := filepath.Walk(postDir, processPost(htmlDir, tmpl)); err != nil {
+	posts := make([]*post.Post, 0, 20)
+	if err := filepath.Walk(postDir, processPost(htmlDir, tmpl, &posts)); err != nil {
 		return errors.Wrapf(err, "cannot process all posts")
 	}
+
+	generateIndex(htmlDir, tmpl, posts)
 
 	return nil
 }
 
-func processPost(outDir string, tmpl *template.Template) func(string, os.FileInfo, error) error {
+func generateIndex(outDir string, tmpl *template.Template, posts []*post.Post) error {
+	sort.Slice(posts, func(i, j int) bool {
+		first := posts[i].Metadata.PublishedAt
+		second := posts[j].Metadata.PublishedAt
+		return first.Before(second)
+	})
+
+	var buf bytes.Buffer
+	buf.WriteString("<h1>Notes</h1>\n")
+	buf.WriteString("<ul>\n")
+	for _, p := range posts {
+		path := "/" + outDir + "/" + p.CanonicalPath()
+		buf.WriteString(fmt.Sprintf("<li><a href=\"%s\">%s</a></li>\n", path, p.Metadata.Title))
+	}
+	buf.WriteString("</ul>\n")
+	p := &post.Post{
+		Metadata: post.Metadata{
+			Title: "index",
+		},
+		HTML: template.HTML(buf.String()),
+	}
+
+	fname := outDir + "/index.html"
+	if err := renderPost(fname, p, tmpl); err != nil {
+		return errors.Wrapf(err, "cannot render index")
+	}
+
+	glog.V(0).Infof("generated %s", fname)
+	return nil
+}
+
+func processPost(outDir string, tmpl *template.Template, posts *[]*post.Post) func(string, os.FileInfo, error) error {
 	return func(fname string, stat os.FileInfo, err error) error {
 		if stat.IsDir() {
 			return nil
@@ -54,6 +90,8 @@ func processPost(outDir string, tmpl *template.Template) func(string, os.FileInf
 		if err := renderPost(generatedFile, post, tmpl); err != nil {
 			return err
 		}
+
+		*posts = append(*posts, post)
 
 		glog.V(0).Infof("generated %s", generatedFile)
 		return nil

@@ -89,6 +89,7 @@ var (
 		".jpeg",
 		".png",
 		".gif",
+		".pdf",
 		".svg",
 		".woff",
 		".woff2",

@@ -49,7 +49,7 @@ func generateIndex(outDir string, tmpl *template.Template, posts []*post.Post) e
 	buf.WriteString("</ul>\n")
 	p := &post.Post{
 		Metadata: post.Metadata{
-			Title: "index",
+			Title: "Bitsgofer",
 		},
 		HTML: template.HTML(buf.String()),
 	}

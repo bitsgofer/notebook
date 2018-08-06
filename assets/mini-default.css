@@ -18,7 +18,7 @@
   --pre-color: #1565c0;
   --border-color: #aaa;
   --secondary-border-color: #ddd;
-  --heading-ratio: 1.19;
+  --heading-ratio: 1.15;
   --universal-margin: 0.5rem;
   --universal-padding: 0.5rem;
   --universal-border-radius: 0.125rem;
@@ -85,7 +85,11 @@ h1 small, h2 small, h3 small, h4 small, h5 small, h6 small {
 }
 
 h1 {
-  font-size: calc(1rem * var(--heading-ratio) * var(--heading-ratio) * var(--heading-ratio) * var(--heading-ratio));
+  margin-top: 4rem;
+  font-size: calc(1rem * var(--heading-ratio) * var(--heading-ratio) * var(--heading-ratio) * var(--heading-ratio) * var(--heading-ratio));
+  padding-bottom: 0.5rem;
+  border-bottom-style: solid;
+  border-bottom-width: 0.01rem;
 }
 
 h2 {
@@ -161,10 +165,12 @@ blockquote[cite]:after {
   white-space: pre;
 }
 
+/*
 code, kbd, pre, samp {
   font-family: Menlo, Consolas, monospace;
   font-size: 0.85em;
 }
+
 
 code {
   background: var(--secondary-back-color);
@@ -188,6 +194,7 @@ pre {
   border-left: 0.25rem solid var(--pre-color);
   border-radius: 0 var(--universal-border-radius) var(--universal-border-radius) 0;
 }
+*/
 
 sup, sub, code, kbd {
   line-height: 0;

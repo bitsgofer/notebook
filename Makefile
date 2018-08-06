@@ -6,6 +6,10 @@ ifneq ("$(RUN)","")
 	_go_test_run_flag=-run $(RUN)
 endif
 GLOG=--stderrthreshold=FATAL
+
+all: test build gen
+.PHONY: all
+
 test:
 	go test -cover -v -race $(_pkg)/$(PKG) ${_go_test_run_flag} $(GLOG)
 	go vet $(_pkg)/$(PKG)

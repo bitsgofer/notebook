@@ -79,12 +79,39 @@ func serveErrPage(w http.ResponseWriter, r *http.Request, status int) {
 	w.Write(b)
 }
 
+var (
+	servableExts = []string{
+		".html",
+		".css",
+		".js",
+		".ico",
+		".jpg",
+		".jpeg",
+		".png",
+		".gif",
+		".svg",
+		".woff",
+		".woff2",
+		".ttf",
+	}
+)
+
+func isServable(ext string) bool {
+	for _, servable := range servableExts {
+		if servable == ext {
+			return true
+		}
+	}
+
+	return false
+}
+
 func fileToServe(htmlDir, path string) string {
 	ext := filepath.Ext(path)
 	switch {
 	case path == "/":
 		return htmlDir + "/index.html"
-	case ext == ".ico" || ext == ".css" || ext == ".js" || ext == ".html":
+	case isServable(ext):
 		return htmlDir + path
 	default:
 		return htmlDir + strings.TrimRight(path, "/") + ".html"

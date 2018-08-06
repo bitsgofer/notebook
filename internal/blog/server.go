@@ -8,56 +8,53 @@ import (
 	"strings"
 
 	"github.com/exklamationmark/glog"
+	"github.com/pkg/errors"
 	"golang.org/x/crypto/acme/autocert"
 )
 
 type config struct {
-	rootDir string
+	htmlDir string
 }
 
-type server struct {
+type Server struct {
 	config
 	acmeManager *autocert.Manager
 }
 
-func New(rootDir, adminEmail string, domains ...string) (*server, error) {
+func New(htmlDir, adminEmail string, domains ...string) (*Server, error) {
+	absHTMLDir, err := filepath.Abs(htmlDir)
+	if err != nil {
+		return nil, errors.Wrapf(err, "cannot find absolute path to %q", htmlDir)
+	}
+
 	c := config{
-		rootDir: rootDir,
+		htmlDir: absHTMLDir,
 	}
 
 	manager := autocert.Manager{
 		Prompt:     autocert.AcceptTOS,
-		Cache:      autocert.DirCache(c.rootDir),
+		Cache:      autocert.DirCache(c.htmlDir),
 		HostPolicy: autocert.HostWhitelist(domains...),
 		Email:      adminEmail,
 	}
 
-	return &server{
+	return &Server{
 		config:      c,
 		acmeManager: &manager,
 	}, nil
 }
 
-func (srv *server) httpHandler() http.Handler {
+func (srv *Server) HTTPRedirectHandler() http.Handler {
 	return srv.acmeManager.HTTPHandler(nil)
 }
 
-func (srv *server) httpsHandler() http.Handler {
-	return http.HandlerFunc(blogHandler(srv.config.rootDir))
+func (srv *Server) BlogHandler() http.Handler {
+	return http.HandlerFunc(blogHandler(srv.config.htmlDir))
 }
 
-func (srv *server) HTTPServer() *http.Server {
-	return &http.Server{
-		Handler: srv.httpHandler(),
-	}
-}
-
-func (srv *server) HTTPSServer() *http.Server {
-	return &http.Server{
-		Handler: srv.httpsHandler(),
-		TLSConfig: &tls.Config{
-			GetCertificate: srv.acmeManager.GetCertificate,
-		},
+func (srv *Server) TLSConfig() *tls.Config {
+	return &tls.Config{
+		GetCertificate: srv.acmeManager.GetCertificate,
 	}
 }
 
@@ -82,26 +79,26 @@ func serveErrPage(w http.ResponseWriter, r *http.Request, status int) {
 	w.Write(b)
 }
 
-func fileToServe(rootDir, path string) string {
+func fileToServe(htmlDir, path string) string {
 	ext := filepath.Ext(path)
 	switch {
 	case path == "/":
-		return rootDir + "/index.html"
+		return htmlDir + "/index.html"
 	case ext == ".ico" || ext == ".css" || ext == ".js" || ext == ".html":
-		return rootDir + path
+		return htmlDir + path
 	default:
-		return rootDir + strings.TrimRight(path, "/") + ".html"
+		return htmlDir + strings.TrimRight(path, "/") + ".html"
 	}
 }
 
-func blogHandler(rootDir string) func(http.ResponseWriter, *http.Request) {
+func blogHandler(htmlDir string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			serveErrPage(w, r, http.StatusBadRequest)
 			return
 		}
 
-		fname := fileToServe(rootDir, r.URL.Path)
+		fname := fileToServe(htmlDir, r.URL.Path)
 		if _, err := os.Stat(fname); err != nil {
 			if os.IsNotExist(err) {
 				glog.Errorf("%q requested but not found", fname)

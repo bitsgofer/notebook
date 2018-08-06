@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -35,8 +36,6 @@ type config struct {
 	postTemplate string
 
 	// server
-	httpAddr   string
-	httpsAddr  string
 	adminEmail string
 	domains    domainsFlag
 	production bool
@@ -60,12 +59,6 @@ func main() {
 		StringVar(&c.postTemplate)
 
 	server := a.Command("serve", "run blog server")
-
-	server.Flag("http.addr", "HTTP listen address (e.g: ':80')").Default(":80").
-		StringVar(&c.httpAddr)
-
-	server.Flag("https.addr", "HTTPS listen address (e.g: ':443')").Default(":443").
-		StringVar(&c.httpsAddr)
 
 	server.Flag("admin.email", "admin email for Let's Encrypt").Default("admin@example.com").
 		StringVar(&c.adminEmail)
@@ -94,25 +87,50 @@ func main() {
 		}
 	case "serve":
 		fmt.Printf("%#v\n", c)
-		srv, err := blogserver.New(c.htmlDir, c.adminEmail, c.domains...)
+		srv, err := blog.New(c.htmlDir, c.adminEmail, c.domains...)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, errors.Wrapf(err, "Cannot create server"))
 			os.Exit(1)
 		}
 
-		go func() {
-			if c.production {
-				if err := srv.HTTPSServer().ListenAndServeTLS("", ""); err != nil {
-					fmt.Fprintln(os.Stderr, errors.Wrapf(err, "HTTPS server failed"))
-					os.Exit(1)
-				}
-			}
-		}()
+		if !c.production {
+			runInDev(srv)
+			return
+		}
+		runInProd(srv)
+	}
+}
 
-		if err := srv.HTTPServer().ListenAndServe(); err != nil {
+func runInProd(srv *blog.Server) {
+	go func() {
+		httpSrv := &http.Server{
+			Addr:    ":80",
+			Handler: srv.HTTPRedirectHandler(),
+		}
+		if err := httpSrv.ListenAndServe(); err != nil {
 			fmt.Fprintln(os.Stderr, errors.Wrapf(err, "HTTP server failed"))
 			os.Exit(1)
 		}
+	}()
 
+	blogSrv := &http.Server{
+		Addr:      ":443",
+		Handler:   srv.BlogHandler(),
+		TLSConfig: srv.TLSConfig(),
+	}
+	if err := blogSrv.ListenAndServeTLS("", ""); err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "Blog server failed"))
+		os.Exit(1)
+	}
+}
+
+func runInDev(srv *blog.Server) {
+	blogSrv := &http.Server{
+		Addr:    ":80",
+		Handler: srv.BlogHandler(),
+	}
+	if err := blogSrv.ListenAndServe(); err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "blog server failed"))
+		os.Exit(1)
 	}
 }

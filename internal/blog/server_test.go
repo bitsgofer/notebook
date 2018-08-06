@@ -74,8 +74,7 @@ func TestBlogHandlerServeFile(t *testing.T) {
 			if want, got := http.StatusOK, resp.StatusCode; want != got {
 				t.Errorf("wrote wrong HTTP status, want= %v, got= %v", want, got)
 			}
-			body, err := ioutil.ReadAll(resp.Body)
-			t.Logf("err= %v", err)
+			body, _ := ioutil.ReadAll(resp.Body)
 			defer resp.Body.Close()
 			if want, got := tc.expectedBody, string(body); want != got {
 				t.Errorf("wrote wrong body,\n  want= %q\n   got= %q", want, got)
@@ -175,13 +174,13 @@ func TestServeErrPage(t *testing.T) {
 	}
 }
 
-func TestHTTPHandler(t *testing.T) {
+func TestHTTPRedirectHandler(t *testing.T) {
 	srv, _ := New("testdata", "admin@example.com", "example.com", "www.exampleb.com")
 	path := "example.com/somewhere"
 	req := httptest.NewRequest(http.MethodGet, "http://"+path, nil)
 	w := httptest.NewRecorder()
 
-	srv.httpHandler().ServeHTTP(w, req)
+	srv.HTTPRedirectHandler().ServeHTTP(w, req)
 	resp := w.Result()
 	if want, got := http.StatusFound, resp.StatusCode; want != got {
 		t.Errorf("wrote wrong HTTP status, want= %v, got= %v", want, got)
@@ -191,7 +190,7 @@ func TestHTTPHandler(t *testing.T) {
 	}
 }
 
-func TestHTTPSHandler(t *testing.T) {
+func TestBlogHandler(t *testing.T) {
 	serveFile = func(w http.ResponseWriter, r *http.Request, fname string) {
 		http.ServeFile(w, r, fname)
 	}
@@ -202,7 +201,7 @@ func TestHTTPSHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 	expectedBody := "<html><head></head><body><h1>sample</h1><p>body</p></body></html>"
 
-	srv.httpsHandler().ServeHTTP(w, req)
+	srv.BlogHandler().ServeHTTP(w, req)
 	resp := w.Result()
 	if want, got := http.StatusOK, resp.StatusCode; want != got {
 		t.Errorf("wrote wrong HTTP status, want= %v, got= %v", want, got)

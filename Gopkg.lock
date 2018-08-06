@@ -55,15 +55,6 @@
   revision = "c126467f60eb25f8f27e5a981f32a87e3965053f"
 
 [[projects]]
-  branch = "master"
-  name = "golang.org/x/net"
-  packages = [
-    "html",
-    "html/atom"
-  ]
-  revision = "a680a1efc54dd51c040b3b5ce4939ea3cf2ea0d1"
-
-[[projects]]
   name = "gopkg.in/alecthomas/kingpin.v2"
   packages = ["."]
   revision = "947dcec5ba9c011838740e680966fd7087a71d0d"
@@ -84,6 +75,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "3e44a66046ba9c53f36a1a2de63b653d796db92531ef17425f082445c0eae437"
+  inputs-digest = "2948cf731919749f455caa4a5038fada308b6ec31d46c85862da768114569730"
   solver-name = "gps-cdcl"
   solver-version = 1

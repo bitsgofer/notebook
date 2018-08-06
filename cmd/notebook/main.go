@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	"github.com/exklamationmark/notebook/internal/blogserver"
+	"github.com/exklamationmark/notebook/internal/blog"
 	"github.com/exklamationmark/notebook/internal/staticgen"
 )
 

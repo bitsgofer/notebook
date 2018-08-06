@@ -1,4 +1,4 @@
-package blogserver
+package blog
 
 import (
 	"fmt"

@@ -9,12 +9,12 @@ tags:
   - ops
 ---
 
-This is a first look at [Terraform](https://www.terraform.io/) from Hashicorp. The most up-to-date work can be found [at this link](https://github.com/exklamationmark/terraform).
+This is a first look at [Terraform](https://www.terraform.io/) from HashiCorp. The most up-to-date work can be found [at this link](https://github.com/exklamationmark/terraform).
 # What is it
 
-> This is probably an oversimplification of what Terraform is, but everything has to start somewhere.
+This is probably an oversimplification of what Terraform is, but let's start anw:
 
-Terraform provides a language to describe a **desired** state of infrastructure (e.g: want 2 VM on Google Clould, VM 1 is a `f1-micro`, booting with the image named `ubuntu-18084-bionic-v20180723`, VM2 is a `g1-small`, etc).
+Terraform uses [HashiCorp configuration language](https://github.com/hashicorp/hcl) to describe a **desired** state of infrastructure (e.g: want 2 VM on Google Clould, VM 1 is a `f1-micro`, booting with the image named `ubuntu-18084-bionic-v20180723`, VM2 is a `g1-small`, etc).
 
 After specifying the desired state, we tell Terraform to generate a plan to change our current infrastructure to match it. The plan involves making API calls to the cloud provider (GCP, AWS, Azure, etc). To do this, Terraform uses the current state of infra and make a "patch" to make curren state similar to desired state.
 
@@ -49,17 +49,17 @@ Configs are stored in `examples`, consisting of:
 
 **provider.tf**, defining how to connect to Google API:
 
-```
+<pre class="language-terraform"><code class="language-terraform">
 provider "google" {
 	credentials = "${file("/path/to/google/credentials/file.json")}"
 	project     = "gcp/project/name"
 	region      = "asia-southeast1"
 }
-```
+</code></pre>
 
 **test_vm.tf**, defining a sample VM:
 
-```
+<pre class="language-terraform"><code class="language-terraform">
 resource "google_compute_instance" "some-kind-of-name" {
 	name         = "VM-name"
 	machine_type = "machine-type"
@@ -77,17 +77,17 @@ resource "google_compute_instance" "some-kind-of-name" {
 		network = "default"
 	}
 }
-```
+</code></pre>
 
 ## Operate
 
-Run:
+<pre class="language-bash" data-user="me" data-host="local"><code class="language-bash">
+$ terraform plan examples/            # view the plan (dry-run)
+$ terraform apply examples/           # generate a plan && apply
+$ terraform destroy examples/         # destroy the setup
+</code></pre>
 
-- `terraform plan examples/` -> view the "patch" (dry-run)
-- `terraform apply examples/` -> generate a patch && apply
-- `terraform destroy examples/` -> destroy the setup
-
-## Cheatsheet for GCP
+# Cheatsheet for GCP
 
 - Zone name
 	- Console -> Compute Engine -> Zones

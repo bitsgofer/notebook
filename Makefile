@@ -20,11 +20,17 @@ build:
 	go build -o  build/notebook ${_pkg}/cmd/notebook
 .PHONY: build
 
-gen: build
+gen:
 	./build/notebook generate --post.dir=posts/ --html.dir=public_html/ --post.template=template.html
 .PHONY: gen
 
-serve.local: build
-serve.local: gen
+serve.local:
 	sudo ./build/notebook serve --html.dir=public_html/
 .PHONY: run
+
+run: build gen serve.local
+.PHONY: run
+
+clean:
+	rm -rf public_html/*/
+.PHONY: clean

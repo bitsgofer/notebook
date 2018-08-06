@@ -12,18 +12,18 @@ tags:
 Recently, one of my colleagues tried to write the value `0.1` into `OpenTSDB` but
 got `0.100000001490116` when querying it back.
 
-{% highlight bash %}
-$> echo "run OpenTSDB, listening on :4242"
+<pre class="language-bash"><code class="language-bash">
+$ echo "run OpenTSDB, listening on :4242"
 
-$> echo "write 0.1"
-$> curl -sX POST '127.0.0.1:/4242/api/put' \
+$ echo "write 0.1"
+$ curl -sX POST '127.0.0.1:/4242/api/put' \
         -H 'Content-Type: application/json' \
         -d '[{"metric":"test","tags":{"k":"v"},"timestamp":1523353120,"value":0.1}]' \
         -i
 HTTP/1.1 204 No Content
 
-$> echo "query back"
-$> curl -sX POST '127.0.0.1:/4242/api/query' \
+$ echo "query back"
+$ curl -sX POST '127.0.0.1:/4242/api/query' \
         -H 'Content-Type: application/json' \
         -d '{"start":1523353100,"end":1523353140,"queries":[{"metric":"test","tags":{"k":"v"},"aggregator":"none"}]}' \
         | json_pp
@@ -39,7 +39,7 @@ $> curl -sX POST '127.0.0.1:/4242/api/query' \
 		}
 	}
 ]
-{% endhighlight %}
+</code></pre>
 
 The thus a series of WTF commenced.
 
@@ -97,16 +97,16 @@ This means it's impossible to fit any range of `real numbers` into 32 or 64 bits
 
 Recall that you can express `integers` as sum of powers of 2, e.g:
 
-{% highlight bash %}
+<pre class="language-bash"><code class="language-bash">
 15 = 8 + 4 + 2 + 1 = 1 * 2^3 + 1 * 2^2 + 1 * 2^z + 1 * 2^0
-{% endhighlight %}
+</code></pre>
 
 Real numbers is also expressed in somewhat similar way:
 
-{% highlight bash %}
+<pre class="language-bash"><code class="language-bash">
 usually = (-1)^sign * 2^(exponent-1023) * 1.significant
 or      = (-1)^sign * 2^-1022           * 0.significant        (very small numbers)
-{% endhighlight %}
+</code></pre>
 
 Basically, we partition the N bits into 3 parts to represent 3 integers:
 - sign
@@ -116,16 +116,16 @@ Basically, we partition the N bits into 3 parts to represent 3 integers:
 
 The exact number of bits used per part are:
 
-{% highlight bash %}
+<pre class="language-bash"><code class="language-bash">
 | type    | sign | exponent | significant precision |
 |---------|------|----------|-----------------------|
 | 32-bit  |    1 |        8 |                    23 |
 | 64-bit  |    1 |       11 |                    52 |
-{% endhighlight %}
+</code></pre>
 
 For example, in 64 bits format:
 
-{% highlight bash %}
+<pre class="language-bash"><code class="language-bash">
 | value  | sign | exponent    | significant precision                                |
 |--------|------|-------------|------------------------------------------------------|
 |    0.5 |    0 | 01111111110 | 0000000000000000000000000000000000000000000000000000 |
@@ -136,7 +136,7 @@ For example, in 64 bits format:
 |--------|------|-------------|------------------------------------------------------|
 |  112.1 |    0 | 10000000101 | 1100000001100110011001100110011001100110011001100110 |
 | approx |    0 |        1030 |                                     3384736594945638 |
-{% endhighlight %}
+</code></pre>
 
 ## 3. Many real numbers can only be approximated in floating point format
 
@@ -148,15 +148,11 @@ This represents the most critical part about `floating point numbers`: they are 
 Unlike `integers`, most `floating point numbers` doesn't have an exact representation
 in binary systems. An iconic example is `0.1`, illustrated here:
 
-{% highlight go %}
+<pre class="language-go line-numbers"><code class="language-go">
 func main() {
-	fmt.Printf("%0.64f\n", 0.1)
+	fmt.Printf("%0.64f\n", 0.1) // 0.1000000000000000055511151231257827021181583404541015625000000000
 }
-
-->
-
-0.1000000000000000055511151231257827021181583404541015625000000000
-{% endhighlight %}
+</code></pre>
 
 ## 4. Rounding/truncation doesn't help with retaining precision
 
@@ -170,7 +166,7 @@ You will get another approximated number.
 
 Secondly, consider this code that simulate the effect of rounding.
 
-{% highlight go %}
+<pre class="language-go line-numbers"><code class="language-go">
 package main
 
 import (
@@ -201,10 +197,9 @@ func main() {
 
 	fmt.Printf("%0.64f\n", x)
 }
-{% endhighlight %}
+</code></pre>
 
-
-{% highlight go %}
+<pre class="language-bash"><code class="language-bash">
 multiply:
 0.0100000000000000019428902930940239457413554191589355468750000000
 0.0010000000000000000208166817117216851329430937767028808593750000
@@ -219,7 +214,7 @@ divide:
 0.0000000000000000000000000000000000000000000000000000000000000000
 0.0000000000000000000000000000000000000000000000000000000000000000
 0.0000000000000000000000000000000000000000000000000000000000000000
-{% endhighlight %}
+</code></pre>
 
 
 Mathematically, you would expect to get `0.1` afterwards, but got `0` instead.

@@ -40,7 +40,7 @@ func generateIndex(outDir string, tmpl *template.Template, posts []*post.Post) e
 	})
 
 	var buf bytes.Buffer
-	buf.WriteString("<h1>Notes</h1>\n")
+	buf.WriteString("<h2>Index</h2>\n")
 	buf.WriteString("<ul>\n")
 	for _, p := range posts {
 		path := "/" + p.CanonicalPath()

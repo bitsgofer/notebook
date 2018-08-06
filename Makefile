@@ -20,17 +20,26 @@ build:
 	go build -o  build/notebook ${_pkg}/cmd/notebook
 .PHONY: build
 
-gen:
+gen.assets:
+	minify assets/*.css > public_html/builtin.css
+	minify assets/*.js > public_html/builtin.js
+	cp assets/favicon.ico public_html/favicon.ico
+.PHONY: gen.assets
+
+gen: clean gen.assets
 	./build/notebook generate --post.dir=posts/ --html.dir=public_html/ --post.template=template.html
 .PHONY: gen
 
 serve.local:
 	sudo ./build/notebook serve --html.dir=public_html/
-.PHONY: run
+.PHONY: serve.local
 
 run: build gen serve.local
 .PHONY: run
 
 clean:
 	rm -rf public_html/*/
+	rm -f public_html/*.css
+	rm -f public_html/*.js
+	rm -f public_html/*.ico
 .PHONY: clean

@@ -1,0 +1,28 @@
+.resume, .resume * {
+  font-family: Georgia, serif;
+  font-size: 1.05rem;
+}
+
+.resume h1 {
+  font-size: calc(1rem * var(--heading-ratio) * var(--heading-ratio) * var(--heading-ratio) * var(--heading-ratio));
+}
+
+.resume h2 {
+  font-size: calc(1rem * var(--heading-ratio) * var(--heading-ratio));
+}
+
+.resume h3 {
+  font-size: calc(1rem * var(--heading-ratio));
+}
+
+.resume strong {
+	color: var(--secondary-fore-color);
+}
+
+.resume .job-title {
+	font-weight: 600;
+}
+
+.resume .job-date {
+	text-align: right;
+}

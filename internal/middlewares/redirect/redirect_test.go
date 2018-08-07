@@ -1,7 +1,9 @@
-package redirection
+package redirect
 
 import (
 	"flag"
+	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"testing"
 
@@ -12,10 +14,11 @@ import (
 var _ flag.Value = (*Redirections)(nil)
 
 var (
-	url1, _   = url.Parse("http://subdomain.example.com")
+	// NOTE: IRL (browser, curl), path eithers poitns to root ("/") or some relative path
+	url1, _   = url.Parse("http://subdomain.example.com/")
 	url2, _   = url.Parse("https://example.com/path?with=query")
-	url3, _   = url.Parse("host.only")
-	url4, _   = url.Parse("another.host:80")
+	url3, _   = url.Parse("host.only/")
+	url4, _   = url.Parse("another.host:80/")
 	url5, _   = url.Parse("https://valid.domain/path?q=v")
 	ftpURL, _ = url.Parse("ftp://file/path")
 )
@@ -34,7 +37,7 @@ func TestRedirectionsString(t *testing.T) {
 				Redirection{FromURL: *url1, ToURL: *url2},
 				Redirection{FromURL: *url3, ToURL: *url4},
 			},
-			"{http://subdomain.example.com => https://example.com/path?with=query, host.only => another.host:80, }",
+			"{http://subdomain.example.com/ => https://example.com/path?with=query, host.only/ => another.host:80/, }",
 		},
 	}
 
@@ -55,7 +58,7 @@ func TestRedirectionsSet(t *testing.T) {
 	}{
 		{
 			"single redirection",
-			"host.only=>https://example.com/path?with=query",
+			"host.only/=>https://example.com/path?with=query",
 			Redirections{
 				Redirection{FromURL: *url3, ToURL: *url2},
 			},
@@ -63,7 +66,7 @@ func TestRedirectionsSet(t *testing.T) {
 		},
 		{
 			"multiple redirection",
-			"host.only=>https://example.com/path?with=query,another.host:80=>http://subdomain.example.com",
+			"host.only/=>https://example.com/path?with=query,another.host:80/=>http://subdomain.example.com/",
 			Redirections{
 				Redirection{FromURL: *url3, ToURL: *url2},
 				Redirection{FromURL: *url4, ToURL: *url1},
@@ -116,12 +119,12 @@ func TestRedirectionsSet(t *testing.T) {
 	}
 }
 
-func TestValidate(t *testing.T) {
+func TestNewHandler(t *testing.T) {
 	var testCases = []struct {
-		name            string
-		redirections    Redirections
-		servableDomains []string
-		expectedErr     error
+		name        string
+		rds         Redirections
+		domains     []string
+		expectedErr error
 	}{
 		{
 			"multiple redirections",
@@ -144,7 +147,7 @@ func TestValidate(t *testing.T) {
 				Redirection{FromURL: *url1, ToURL: *url5},
 			},
 			[]string{},
-			errors.New("cannot redirect from http://subdomain.example.com, not serving the domain"),
+			errors.New("cannot redirect from http://subdomain.example.com/, not serving the domain"),
 		},
 		{
 			"not HTTP or HTTPS",
@@ -152,13 +155,16 @@ func TestValidate(t *testing.T) {
 				Redirection{FromURL: *ftpURL, ToURL: *url5},
 			},
 			[]string{"example.com", "subdomain.example.com"},
-			errors.New("cannot redirect from ftp://file/path, scheme must be HTTP or HTTPS"),
+			errors.New("cannot redirect from URL with ftp scheme"),
 		},
 	}
 
+	nopHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	})
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := Validate(tc.redirections, tc.servableDomains...)
+			_, err := NewHandler(nopHandler, tc.rds, tc.domains...)
 			if tc.expectedErr == nil && err != nil {
 				t.Errorf("want no error, got= %v", err)
 			}
@@ -168,6 +174,72 @@ func TestValidate(t *testing.T) {
 			if tc.expectedErr != nil && err != nil && errors.Cause(err).Error() != tc.expectedErr.Error() {
 				t.Errorf("wrong error\n  want= %v\n   got= %v", tc.expectedErr, err)
 			}
+		})
+	}
+}
+
+func TestHandlerRedirect(t *testing.T) {
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Handled-By", "next")
+	})
+	rds := Redirections{
+		Redirection{FromURL: *url1, ToURL: *url5},
+		Redirection{FromURL: *url2, ToURL: *url5},
+	}
+	domains := []string{"example.com", "subdomain.example.com"}
+
+	handler, err := NewHandler(next, rds, domains...)
+	if err != nil {
+		t.Fatalf("cannot create handler; err = %v", err)
+	}
+
+	var testCases = []struct {
+		name          string
+		scheme        string
+		host          string
+		pathAndQuery  string
+		redirectedURL string
+	}{
+		{
+			"redirect http with hostname",
+			"http", "subdomain.example.com", "/",
+			"https://valid.domain/path?q=v",
+		},
+		{
+			"redirect https with hostname and query",
+			"https", "example.com", "/path?with=query",
+			"https://valid.domain/path?q=v",
+		},
+		{
+			"no redirection",
+			"http", "not.redirectable", "/",
+			"",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			r := httptest.NewRequest(http.MethodGet, tc.pathAndQuery, nil)
+			r.Host = tc.host
+			w := httptest.NewRecorder()
+			handler.ServeHTTP(w, r)
+			resp := w.Result()
+
+			if len(tc.redirectedURL) < 1 { // no redirection
+				if resp.Header.Get("X-Handled-By") != "next" {
+					t.Errorf("non-redirect request not handled by next")
+				}
+				return
+			}
+
+			// redirected
+			if want, got := http.StatusMovedPermanently, resp.StatusCode; want != got {
+				t.Errorf("wrong status code, want= %v, got= %v", want, got)
+			}
+			if want, got := url5.String(), resp.Header.Get("Location"); want != got {
+				t.Errorf("wrong Location header\n  want= %v\n   got= %v", want, got)
+			}
+
 		})
 	}
 }

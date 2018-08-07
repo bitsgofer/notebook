@@ -5,7 +5,10 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
+
+	"github.com/exklamationmark/notebook/internal/redirection"
 )
 
 func TestBlogHandlerServeFile(t *testing.T) {
@@ -174,8 +177,15 @@ func TestServeErrPage(t *testing.T) {
 	}
 }
 
+var (
+	exampleDomains = []string{
+		"example.com",
+		"www.example.com",
+	}
+)
+
 func TestHTTPRedirectHandler(t *testing.T) {
-	srv, _ := New("testdata", "admin@example.com", "example.com", "www.exampleb.com")
+	srv, _ := New("testdata", "admin@example.com", exampleDomains)
 	path := "example.com/somewhere"
 	req := httptest.NewRequest(http.MethodGet, "http://"+path, nil)
 	w := httptest.NewRecorder()
@@ -195,7 +205,7 @@ func TestBlogHandler(t *testing.T) {
 		http.ServeFile(w, r, fname)
 	}
 
-	srv, _ := New("testdata", "admin@example.com", "example.com", "www.exampleb.com")
+	srv, _ := New("testdata", "admin@example.com", exampleDomains)
 	path := "example.com/sample"
 	req := httptest.NewRequest(http.MethodGet, "https://"+path, nil)
 	w := httptest.NewRecorder()
@@ -209,5 +219,36 @@ func TestBlogHandler(t *testing.T) {
 	body, _ := ioutil.ReadAll(resp.Body)
 	if want, got := expectedBody, string(body); want != got {
 		t.Errorf("wrote wrong body,\n  want= %q\n   got= %q", want, got)
+	}
+}
+
+func TestBlogHandlerForward(t *testing.T) {
+	serveFile = func(w http.ResponseWriter, r *http.Request, fname string) {
+		http.ServeFile(w, r, fname)
+	}
+
+	from, _ := url.Parse("https://subdomain.example.com")
+	to, _ := url.Parse("https://to.forward.domain/path?query=val")
+
+	srv, err := New("testdata", "admin@example.com",
+		append(exampleDomains, "subdomain.example.com"),
+		Redirect(redirection.Redirections{
+			redirection.Redirection{FromURL: *from, ToURL: *to},
+		}),
+	)
+	if err != nil {
+		t.Fatalf("err= %v", err)
+	}
+	req := httptest.NewRequest(http.MethodGet, "https://subdomain.example.com", nil)
+	w := httptest.NewRecorder()
+
+	srv.BlogHandler().ServeHTTP(w, req)
+
+	resp := w.Result()
+	if want, got := http.StatusMovedPermanently, resp.StatusCode; want != got {
+		t.Errorf("wrote wrong HTTP status, want= %v, got= %v", want, got)
+	}
+	if want, got := to.String(), resp.Header.Get("Location"); want != got {
+		t.Errorf("forwarded to wrong URL\n  want= %q\n   got= %q", want, got)
 	}
 }

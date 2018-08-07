@@ -10,25 +10,32 @@ import (
 	"github.com/exklamationmark/glog"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/acme/autocert"
+
+	"github.com/exklamationmark/notebook/internal/redirection"
 )
 
 type config struct {
-	htmlDir string
+	htmlDir      string
+	redirections redirection.Redirections
 }
+
+type opt func(*config)
 
 type Server struct {
 	config
 	acmeManager *autocert.Manager
+	toForward   map[string]string
 }
 
-func New(htmlDir, adminEmail string, domains ...string) (*Server, error) {
+func New(htmlDir, adminEmail string, domains []string, opts ...opt) (*Server, error) {
 	absHTMLDir, err := filepath.Abs(htmlDir)
 	if err != nil {
 		return nil, errors.Wrapf(err, "cannot find absolute path to %q", htmlDir)
 	}
 
-	c := config{
-		htmlDir: absHTMLDir,
+	c := config{htmlDir: absHTMLDir}
+	for _, opt := range opts {
+		opt(&c)
 	}
 
 	manager := autocert.Manager{
@@ -38,10 +45,26 @@ func New(htmlDir, adminEmail string, domains ...string) (*Server, error) {
 		Email:      adminEmail,
 	}
 
+	if err := redirection.Validate(c.redirections, domains...); err != nil {
+		return nil, errors.Wrapf(err, "redirection options is not valid")
+	}
+	toForward := make(map[string]string, len(c.redirections))
+	for _, rd := range c.redirections {
+		fromURL := strings.Trim(rd.FromURL.Host+"/"+rd.FromURL.Path, "/")
+		toForward[fromURL] = rd.ToURL.String()
+	}
+
 	return &Server{
 		config:      c,
 		acmeManager: &manager,
+		toForward:   toForward,
 	}, nil
+}
+
+func Redirect(rds redirection.Redirections) func(*config) {
+	return func(c *config) {
+		c.redirections = rds
+	}
 }
 
 func (srv *Server) HTTPRedirectHandler() http.Handler {
@@ -49,7 +72,16 @@ func (srv *Server) HTTPRedirectHandler() http.Handler {
 }
 
 func (srv *Server) BlogHandler() http.Handler {
-	return http.HandlerFunc(blogHandler(srv.config.htmlDir))
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fromURL := strings.Trim(r.Host+"/"+r.URL.Path, "/")
+		if toURL, exist := srv.toForward[fromURL]; exist {
+			http.Redirect(w, r, toURL, http.StatusMovedPermanently)
+			glog.Infof("redirected %s to %s", fromURL, toURL)
+			return
+		}
+
+		blogHandler(srv.config.htmlDir)(w, r)
+	})
 }
 
 func (srv *Server) TLSConfig() *tls.Config {

@@ -5,7 +5,7 @@ RUN=
 ifneq ("$(RUN)","")
 	_go_test_run_flag=-run $(RUN)
 endif
-GLOG=--stderrthreshold=FATAL
+GLOG=
 
 all: test build gen
 .PHONY: all

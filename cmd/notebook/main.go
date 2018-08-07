@@ -11,6 +11,7 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/exklamationmark/notebook/internal/blog"
+	"github.com/exklamationmark/notebook/internal/redirection"
 	"github.com/exklamationmark/notebook/internal/staticgen"
 )
 
@@ -36,9 +37,10 @@ type config struct {
 	postTemplate string
 
 	// server
-	adminEmail string
-	domains    domainsFlag
-	production bool
+	adminEmail   string
+	domains      domainsFlag
+	production   bool
+	redirections redirection.Redirections
 }
 
 func main() {
@@ -69,6 +71,9 @@ func main() {
 	server.Flag("production", "production mode (enable HTTPS)").Default("false").
 		BoolVar(&c.production)
 
+	server.Flag("redirect", "redirection options").Default("").
+		SetValue(&c.redirections)
+
 	// ----------------------------------------
 
 	cmd, err := a.Parse(os.Args[1:])
@@ -87,7 +92,7 @@ func main() {
 		}
 	case "serve":
 		fmt.Printf("%#v\n", c)
-		srv, err := blog.New(c.htmlDir, c.adminEmail, c.domains...)
+		srv, err := blog.New(c.htmlDir, c.adminEmail, c.domains, blog.Redirect(c.redirections))
 		if err != nil {
 			fmt.Fprintln(os.Stderr, errors.Wrapf(err, "Cannot create server"))
 			os.Exit(1)
@@ -133,4 +138,5 @@ func runInDev(srv *blog.Server) {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "blog server failed"))
 		os.Exit(1)
 	}
+
 }

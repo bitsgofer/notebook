@@ -11,7 +11,7 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/exklamationmark/notebook/internal/blog"
-	"github.com/exklamationmark/notebook/internal/redirection"
+	"github.com/exklamationmark/notebook/internal/middlewares/redirect"
 	"github.com/exklamationmark/notebook/internal/staticgen"
 )
 
@@ -40,7 +40,7 @@ type config struct {
 	adminEmail   string
 	domains      domainsFlag
 	production   bool
-	redirections redirection.Redirections
+	redirections redirect.Redirections
 }
 
 func main() {

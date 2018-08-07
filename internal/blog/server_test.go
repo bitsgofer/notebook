@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/exklamationmark/notebook/internal/redirection"
+	"github.com/exklamationmark/notebook/internal/middlewares/redirect"
 )
 
 func TestBlogHandlerServeFile(t *testing.T) {
@@ -227,19 +227,19 @@ func TestBlogHandlerForward(t *testing.T) {
 		http.ServeFile(w, r, fname)
 	}
 
-	from, _ := url.Parse("https://subdomain.example.com")
+	from, _ := url.Parse("https://subdomain.example.com/")
 	to, _ := url.Parse("https://to.forward.domain/path?query=val")
 
 	srv, err := New("testdata", "admin@example.com",
 		append(exampleDomains, "subdomain.example.com"),
-		Redirect(redirection.Redirections{
-			redirection.Redirection{FromURL: *from, ToURL: *to},
+		Redirect(redirect.Redirections{
+			redirect.Redirection{FromURL: *from, ToURL: *to},
 		}),
 	)
 	if err != nil {
 		t.Fatalf("err= %v", err)
 	}
-	req := httptest.NewRequest(http.MethodGet, "https://subdomain.example.com", nil)
+	req := httptest.NewRequest(http.MethodGet, "https://subdomain.example.com/", nil)
 	w := httptest.NewRecorder()
 
 	srv.BlogHandler().ServeHTTP(w, req)

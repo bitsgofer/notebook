@@ -11,12 +11,12 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/acme/autocert"
 
-	"github.com/exklamationmark/notebook/internal/redirection"
+	"github.com/exklamationmark/notebook/internal/middlewares/redirect"
 )
 
 type config struct {
 	htmlDir      string
-	redirections redirection.Redirections
+	redirections redirect.Redirections
 }
 
 type opt func(*config)
@@ -24,7 +24,7 @@ type opt func(*config)
 type Server struct {
 	config
 	acmeManager *autocert.Manager
-	toForward   map[string]string
+	handler     http.Handler
 }
 
 func New(htmlDir, adminEmail string, domains []string, opts ...opt) (*Server, error) {
@@ -45,23 +45,20 @@ func New(htmlDir, adminEmail string, domains []string, opts ...opt) (*Server, er
 		Email:      adminEmail,
 	}
 
-	if err := redirection.Validate(c.redirections, domains...); err != nil {
-		return nil, errors.Wrapf(err, "redirection options is not valid")
-	}
-	toForward := make(map[string]string, len(c.redirections))
-	for _, rd := range c.redirections {
-		fromURL := strings.Trim(rd.FromURL.Host+"/"+rd.FromURL.Path, "/")
-		toForward[fromURL] = rd.ToURL.String()
+	next := http.HandlerFunc(blogHandler(c.htmlDir))
+	handler, err := redirect.NewHandler(next, c.redirections, domains...)
+	if err != nil {
+		return nil, errors.Wrapf(err, "cannot create handler")
 	}
 
 	return &Server{
 		config:      c,
 		acmeManager: &manager,
-		toForward:   toForward,
+		handler:     handler,
 	}, nil
 }
 
-func Redirect(rds redirection.Redirections) func(*config) {
+func Redirect(rds redirect.Redirections) func(*config) {
 	return func(c *config) {
 		c.redirections = rds
 	}
@@ -72,16 +69,7 @@ func (srv *Server) HTTPRedirectHandler() http.Handler {
 }
 
 func (srv *Server) BlogHandler() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fromURL := strings.Trim(r.Host+"/"+r.URL.Path, "/")
-		if toURL, exist := srv.toForward[fromURL]; exist {
-			http.Redirect(w, r, toURL, http.StatusMovedPermanently)
-			glog.Infof("redirected %s to %s", fromURL, toURL)
-			return
-		}
-
-		blogHandler(srv.config.htmlDir)(w, r)
-	})
+	return srv.handler
 }
 
 func (srv *Server) TLSConfig() *tls.Config {

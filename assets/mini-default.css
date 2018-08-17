@@ -170,15 +170,18 @@ code, kbd, pre, samp {
   font-family: Menlo, Consolas, monospace;
   font-size: 0.85em;
 }
+*/
 
 
-code {
+:not(pre) > code {
   background: var(--secondary-back-color);
   border-radius: var(--universal-border-radius);
   padding: calc(var(--universal-padding) / 4) calc(var(--universal-padding) / 2);
+  color: var(--pre-color);
 }
 
-kbd {
+/*
+ kbd {
   background: var(--fore-color);
   color: var(--back-color);
   border-radius: var(--universal-border-radius);

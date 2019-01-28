@@ -1,6 +1,6 @@
 ---
 title: The junior-senior engineer chasm
-slug: the junior-senior engineer chasm
+slug: the-junior-senior-engineer-chasm
 author: mark
 published: 2019-01-28T10:54:00+07:00
 tags:

@@ -103,7 +103,8 @@ One thing that Go get right is `gofmt`, as it has become an enforced social cont
 
 This is what we need when writing critical software. However the implementation in Go leaves a lot to be desired.
 
-On other problem that might be a concern is a performance problem.
+Another problem that might be a concern is a performance (more work/function call, especially on
+systems with high load).
 
 ### Other tidbits
 

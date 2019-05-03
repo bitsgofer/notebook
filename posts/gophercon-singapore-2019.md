@@ -10,14 +10,14 @@ tags:
 > Disclaimer: This is my subjective summary and commentary on talks at Gophercon Singapore 2019.
 >
 > It is mainly for me to keep track and distil ideas from the conference.
-> Obviously there will be talks where I take more/lessn notes based on interests/existing knowledge.
+> Obviously there will be talks where I take more/less notes based on interests/existing knowledge.
 > It doesn't necessarily reflects anything about the speaker (I'm much grateful to learn from them :D).
 >
 > YMMV!
 
 On overall, this year have more talks that kept me thinking than last year :)
 
-# Keynote
+# Clear is better than clever
 
 [Dave Cheney](https://2019.gophercon.sg/speakers/#dave-cheney) talked about clarity and how it is different from readability. If you have seen his notes/book for Practical Go workshop at [Gophercon China](https://dave.cheney.net/practical-go/presentations/qcon-china.html) or [Gophercon Singapore 2019](https://dave.cheney.net/practical-go/presentations/gophercon-singapore-2019.html), it will feel very similar.
 

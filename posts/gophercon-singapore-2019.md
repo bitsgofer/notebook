@@ -128,7 +128,7 @@ examples of how to write them in Go (mostly via pre/post-condition checks, IIRC)
 When writing critical software, we will need them and more (e.g. contracts w.r.t timing, halting,
 correctness through concurrent execution, resource usage, etc).
 
-P.S: You shouldn't use Go for them, anyway.
+P.S: You shouldn't use Go for critical software, anyway.
 
 Another problematic area is performance (checking contracts cost CPU cycles) and graceful failure
 (what to do when contracts fails), which are things we also need to think of.

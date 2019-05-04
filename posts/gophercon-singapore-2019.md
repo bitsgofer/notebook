@@ -48,11 +48,11 @@ when you write code, try to help the next person.
 
 I picked up a few additional things from Dave's workshop, too.
 
-#### 1. [variable shadowing](https://en.wikipedia.org/wiki/Variable_shadowing)
+#### 1. [Variable shadowing](https://en.wikipedia.org/wiki/Variable_shadowing)
 
 When we see the same variable name appear in different scope and it mess with our head.
 
-#### 2. books
+#### 2. Books
 
 - [The Limits of Software: People, project and Perspectives](https://www.goodreads.com/book/show/3369746-the-limits-of-software)
 - [Principles of Operating Systems](https://mitpress.mit.edu/books/principles-operating-systems)

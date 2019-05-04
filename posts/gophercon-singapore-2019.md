@@ -79,7 +79,7 @@ This have some nice effects:
 - It's easier to test now: a `*bytes.Buffer` also implements `io.WriteCloser`, so we can write unit tests in memory w/o opening a real file.
 
 
-#### 5. Make "variadic" function params but requires at least one value
+#### 4. Make "variadic" function params but requires at least one value
 
 [This part was from the workshop](https://dave.cheney.net/practical-go/presentations/gophercon-singapore-2019.html#_prefer_var_args_to_t_parameters). I should have seen this coming after seeing the `x:xs` thing in Haskell :D
 

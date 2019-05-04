@@ -23,7 +23,7 @@ the Practical Go workshop at [Gophercon China](https://dave.cheney.net/practical
 [Gophercon Singapore 2019](https://dave.cheney.net/practical-go/presentations/gophercon-singapore-2019.html),
 it will feel very similar.
 
-Programmers with more "war stories" will appreciate it more, too.
+Programmers with more "war stories" will appreciate it more, I think.
 
 The talk start with a quote from last year's keynote:
 
@@ -42,11 +42,11 @@ designing public APIs](https://dave.cheney.net/practical-go/presentations/gopher
 to make it clear what the code is doing.
 
 The talk ends with a reality of software project: people change jobs and projects all the time, so
-when you write code, try to help the next maintainer, too.
+when you write code, try to help the next person.
 
 ## Other tidbits
 
-I p and picked up a few additional things from Dave's workshop, too.
+I picked up a few additional things from Dave's workshop, too.
 
 #### 1. [variable shadowing](https://en.wikipedia.org/wiki/Variable_shadowing)
 

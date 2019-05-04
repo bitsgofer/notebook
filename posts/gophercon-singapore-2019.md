@@ -50,7 +50,7 @@ I picked up a few additional things from Dave's workshop, too.
 
 #### 1. [variable shadowing](https://en.wikipedia.org/wiki/Variable_shadowing)
 
-When we see the same variable name appear in different scope and mess with our head.
+When we see the same variable name appear in different scope and it mess with our head.
 
 #### 2. books
 

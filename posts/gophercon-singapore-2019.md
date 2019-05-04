@@ -123,7 +123,7 @@ Go programmers, before any stubborn "style camp" appear.
 # High(er) Reliability Software Patterns for Go
 
 [Junade Ali](https://2019.gophercon.sg/speakers/#junade-ali) talked about contracts and showed
-examples of how to write them in Go (mostly via pre/post-condition checks, IIRC).
+examples of how to write them in Go.
 
 When writing critical software, we will need them and more (e.g. contracts w.r.t timing, halting,
 correctness through concurrent execution, resource usage, etc).
@@ -135,18 +135,22 @@ Another problematic area is performance (checking contracts cost CPU cycles) and
 
 ## Other tidbits
 
-#### 1. Critical failures from software
+#### 1. Design by contracts vs Defensive programming
+
+This will help with the confusion: <https://softwareengineering.stackexchange.com/questions/125399/differences-between-design-by-contract-and-defensive-programming>
+
+#### 2. Critical failures from software
 
 - [Toyota Camry's unintended acceleration](https://users.ece.cmu.edu/~koopman/pubs/koopman14_toyota_ua_slides.pdf)
 - [Quantas Flight 72's uncommanded pitch-down](https://en.wikipedia.org/wiki/Qantas_Flight_72)
 
-#### 2. Language with contracts
+#### 3. Language with contracts
 
 - [Ada SPARK](https://en.wikipedia.org/wiki/SPARK_%28programming_language%29)
 - [Eiffel](https://en.wikipedia.org/wiki/Eiffel_%28programming_language%29)
 
 
-#### 3. Other readings
+#### 4. Other readings
 
 - [Design by Contract - Bertrand Meyer](http://se.inf.ethz.ch/~meyer/publications/computer/contract.pdf)
 

@@ -166,7 +166,7 @@ heap or stack. The Go compiler should make the correct choice
 
 Some rule of thumbs:
 
-- Sharing down (pointer used further down in the function/variables passed into next function call)
+- Sharing down (pointer used further down in the function/variables whose pointers you pass into next function call)
   typically stays in the stack.
 - Sharing up (pointer returned to call functions) typically gets allocated from heap.
 - Wrapper structs (slice, map, channel) have special semantics, since they don't contain the actual values.

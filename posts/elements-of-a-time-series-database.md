@@ -22,12 +22,20 @@ time series database would be helpful. Hence this.
 The basic elements of time series database is quite simple, consisting of:
 
 - Data points: tuples of `(timestamp, value)`
+
+![one data point](https://github.com/bitsgofer/notebook/blob/master/images/elements-of-a-time-series-database/one_data_point.PNG?raw=true)
+
 - Time series: a collection/set of data points with unique timestamps within a `[start, end]` range.
   Usually sorted by ascending order of timestamps.
+
+![a time series](https://github.com/bitsgofer/notebook/blob/master/images/elements-of-a-time-series-database/time_series.PNG?raw=true)
+
 - Primary identifiers: properties that uniquely identifier time series (primary keys), including:
   - Metric name: generic category, usually refers to the values recorded (prices, temperature, etc)
   - Dimensions: A set of `(key, value)` tuples that further partition the values.
     Usually values with the same key are disjoint while different keys refer to orthorgonal concepts.
+
+![set membership/how we associate points together](https://github.com/bitsgofer/notebook/blob/master/images/elements-of-a-time-series-database/indentifiers.PNG?raw=true)
 
 As we expands our use cases, more type of secondary data might emerge:
 
@@ -69,6 +77,8 @@ Let's dig into the respective parts
 Again, this section is oversimplifying things!
 
 This was how the old (2.0) storage engine in Prometheus is designed.
+
+![Prometheus 2.0](https://github.com/bitsgofer/notebook/blob/master/images/elements-of-a-time-series-database/prometheus-chunks.PNG?raw=true)
 
 Basically, data is broken into chunks, each for a `[start, end]` range.
 This takes advantage of the facts that writes for Prometheus usually happen at time close to

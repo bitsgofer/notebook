@@ -9,3 +9,4 @@ variables:
 - sometimes can look like questions: isLeapYear
 - to make logic clear, it is better to have 1 line per statement/axiom,
   then join together later
+- in Go, zero value for boolean variables are false, so choose names that make use of this

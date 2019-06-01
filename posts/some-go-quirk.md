@@ -7,8 +7,7 @@ tags:
   - golang
 ---
 
-This is a post documenting some quirky features of Go that I found suprising
-(mostly in the "hey, that's funny" way).
+Some quirky features of Go that I found suprising.
 
 ## 1. Declare arrays/slices the associative way
 
@@ -33,7 +32,6 @@ var slice = []int {
 fmt.Printf("%#v\n", slice) // []int{0, 4, 3, 2}
 </code></pre>
 
-
 That surely looked like a `map`, but it isn't.
 
 The properties of this are:
@@ -43,4 +41,17 @@ The properties of this are:
 - If it's a slice, the backing array contains up to the largest index (`len == max(index) + 1`).
 - No ordering of index is required in this form.
 
-I'm not really sure where would this come in handy, though. Any examples?
+I'm not really sure where would this come in handy, though.
+
+## 2. Terminating testing.T
+
+This one is best [illustrated in this example](https://github.com/bitsgofer/gowat/tree/master/channel-in-test).
+
+Basically, the docs for [testing.T](https://golang.org/pkg/testing/#T) says:
+
+	A test ends when its Test function returns or calls any of the methods FailNow, Fatal,
+	Fatalf, SkipNow, Skip, or Skipf. Those methods, as well as the Parallel method,
+	must be called only from the goroutine running the Test function.
+
+So, if you happen to call `Fatalf` in a goroutine, which I did, the test will not stop.
+You will then have to deal with problems due to it not stopping (a deadlock) in my case.

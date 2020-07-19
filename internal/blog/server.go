@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/acme/autocert"
 
-	"github.com/exklamationmark/notebook/internal/middlewares/redirect"
+	"github.com/bitsgofer/notebook/internal/middlewares/redirect"
 )
 
 type config struct {

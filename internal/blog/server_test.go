@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/exklamationmark/notebook/internal/middlewares/redirect"
+	"github.com/bitsgofer/notebook/internal/middlewares/redirect"
 )
 
 func TestBlogHandlerServeFile(t *testing.T) {

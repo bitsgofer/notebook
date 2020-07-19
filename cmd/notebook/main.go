@@ -10,9 +10,9 @@ import (
 	"github.com/pkg/errors"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	"github.com/exklamationmark/notebook/internal/blog"
-	"github.com/exklamationmark/notebook/internal/middlewares/redirect"
-	"github.com/exklamationmark/notebook/internal/staticgen"
+	"github.com/bitsgofer/notebook/internal/blog"
+	"github.com/bitsgofer/notebook/internal/middlewares/redirect"
+	"github.com/bitsgofer/notebook/internal/staticgen"
 )
 
 type domainsFlag []string

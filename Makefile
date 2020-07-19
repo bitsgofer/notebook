@@ -1,4 +1,4 @@
-_pkg=github.com/exklamationmark/notebook
+_pkg=github.com/bitsgofer/notebook
 
 PKG=./...
 RUN=
@@ -17,7 +17,7 @@ test:
 
 build:
 	mkdir -p build
-	go build -o  build/notebook ${_pkg}/cmd/notebook
+	go build -o build/notebook ${_pkg}/cmd/notebook
 .PHONY: build
 
 gen.assets:

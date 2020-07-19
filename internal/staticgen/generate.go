@@ -9,8 +9,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/bitsgofer/notebook/internal/post"
 	"github.com/exklamationmark/glog"
-	"github.com/exklamationmark/notebook/internal/post"
 	"github.com/pkg/errors"
 )
 

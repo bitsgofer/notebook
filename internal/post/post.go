@@ -11,7 +11,8 @@ import (
 
 	"github.com/exklamationmark/glog"
 	"github.com/pkg/errors"
-	markdown "gopkg.in/russross/blackfriday.v2"
+	markdown "github.com/russross/blackfriday/v2"
+	// markdown "gopkg.in/russross/blackfriday.v2"
 	yaml "gopkg.in/yaml.v2"
 )
 

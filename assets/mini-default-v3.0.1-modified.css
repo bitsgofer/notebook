@@ -3,7 +3,7 @@
   Flavor name: Default (mini-default)
   Author: Angelos Chalaris (chalarangelo@gmail.com)
   Maintainers: Angelos Chalaris
-  mini.css version: v3.0.0
+  mini.css version: v3.0.1
 */
 /*
   Browsers resets and base typography.
@@ -18,7 +18,7 @@
   --pre-color: #1565c0;
   --border-color: #aaa;
   --secondary-border-color: #ddd;
-  --heading-ratio: 1.15;
+  --heading-ratio: 1.19;
   --universal-margin: 0.5rem;
   --universal-padding: 0.5rem;
   --universal-border-radius: 0.125rem;
@@ -85,11 +85,7 @@ h1 small, h2 small, h3 small, h4 small, h5 small, h6 small {
 }
 
 h1 {
-  margin-top: 4rem;
-  font-size: calc(1rem * var(--heading-ratio) * var(--heading-ratio) * var(--heading-ratio) * var(--heading-ratio) * var(--heading-ratio));
-  padding-bottom: 0.5rem;
-  border-bottom-style: solid;
-  border-bottom-width: 0.01rem;
+  font-size: calc(1rem * var(--heading-ratio) * var(--heading-ratio) * var(--heading-ratio) * var(--heading-ratio));
 }
 
 h2 {
@@ -165,23 +161,20 @@ blockquote[cite]:after {
   white-space: pre;
 }
 
-/*
-code, kbd, pre, samp {
+/* Don't format <pre>/<code>/<kbd> (keyboard input)/<samp> (program sample).
+   We will use fonts defined in Prism's CSS. */
+/* code, kbd, pre, samp {
   font-family: Menlo, Consolas, monospace;
   font-size: 0.85em;
-}
-*/
+} */
 
-
-:not(pre) > code {
+code {
   background: var(--secondary-back-color);
   border-radius: var(--universal-border-radius);
   padding: calc(var(--universal-padding) / 4) calc(var(--universal-padding) / 2);
-  color: var(--pre-color);
 }
 
-/*
- kbd {
+kbd {
   background: var(--fore-color);
   color: var(--back-color);
   border-radius: var(--universal-border-radius);
@@ -194,10 +187,10 @@ pre {
   padding: calc(1.5 * var(--universal-padding));
   margin: var(--universal-margin);
   border: 0.0625rem solid var(--secondary-border-color);
-  border-left: 0.25rem solid var(--pre-color);
+  /* Remove the left border in the pre/code blocks. */
+  /* border-left: 0.25rem solid var(--pre-color); */
   border-radius: 0 var(--universal-border-radius) var(--universal-border-radius) 0;
 }
-*/
 
 sup, sub, code, kbd {
   line-height: 0;
@@ -664,7 +657,8 @@ a:hover, a:focus {
   width: 100%;
   background: var(--card-back-color);
   color: var(--card-fore-color);
-  border: 0.0625rem solid var(--card-border-color);
+  /* Remove the box around a card (blog post). */
+  /* border: 0.0625rem solid var(--card-border-color); */
   border-radius: var(--universal-border-radius);
   margin: var(--universal-margin);
   overflow: hidden;
@@ -1388,14 +1382,15 @@ table.horizontal {
 
 table.horizontal thead, table.horizontal tbody {
   border: 0;
+  flex: .2 0 0;
   flex-flow: row nowrap;
 }
 
 table.horizontal tbody {
   overflow: auto;
   justify-content: space-between;
-  flex: 1 0 0;
-  margin-left: calc( 4 * var(--universal-margin));
+  flex: .8 0 0;
+  margin-left: 0;
   padding-bottom: calc(var(--universal-padding) / 4);
 }
 
@@ -1405,7 +1400,7 @@ table.horizontal tr {
 }
 
 table.horizontal th, table.horizontal td {
-  width: 100%;
+  width: auto;
   border: 0;
   border-bottom: 0.0625rem solid var(--table-border-color);
 }
@@ -1535,6 +1530,8 @@ table.hoverable tr:hover, table.hoverable tr:hover > td, table.hoverable tr:focu
 /* Contextual module CSS variable definitions */
 :root {
   --mark-back-color: #0277bd;
+  --mark-dont-back-color: #e53935;
+  --mark-do-back-color: #689f38;
   --mark-fore-color: #fafafa;
 }
 
@@ -1545,6 +1542,13 @@ mark {
   line-height: 1em;
   border-radius: var(--universal-border-radius);
   padding: calc(var(--universal-padding) / 4) calc(var(--universal-padding) / 2);
+}
+/* Additional mark color */
+mark.do {
+  background: var(--mark-do-back-color);
+}
+mark.dont {
+  background: var(--mark-dont-back-color);
 }
 
 mark.inline-block {
@@ -1864,7 +1868,7 @@ progress::-webkit-progress-value {
 }
 
 progress::-webkit-progress-bar {
-  background: var(#ddd);
+  background: var(--progress-back-color);
 }
 
 progress::-moz-progress-bar {

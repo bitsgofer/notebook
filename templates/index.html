@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+<head>
+    <link rel="stylesheet" href="/builtin.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8">
+    <title>Bitsgofer</title>
+</head>
+
+
+
+<body>
+<div id="root">
+    <!-- ------------- header ------------- -->
+        {{template "header" .}}
+    <!-- ------------- ****** ------------- -->
+
+
+    <div class="row" id="doc-wrapper">
+        <main class="col-sm-12 col-md-12 col-lg-12">
+            <div id="summary">
+            {{range _, $summary := .Summaries}}
+                {{template "articleSummary" .}}
+            {{end}}
+            <div><!-- id="summary" -->
+
+
+    <!-- ------------- footer ------------- -->
+    {{template "footer" .}}
+    <!-- ------------- ****** ------------- -->
+        </main>
+    </div><!-- id="doc-wrapper" -->
+</div><!-- id="root" -->
+
+
+<script type="text/javascript" src="/builtin.js"></script>
+
+
+</body>
+</html>

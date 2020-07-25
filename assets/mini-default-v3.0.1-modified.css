@@ -22,6 +22,7 @@
   --universal-margin: 0.5rem;
   --universal-padding: 0.5rem;
   --universal-border-radius: 0.125rem;
+  --quad-margin: 6rem; /* Used to separate summary cards in index page. */
   --a-link-color: #0277bd;
   --a-visited-color: #01579b;
 }
@@ -662,6 +663,11 @@ a:hover, a:focus {
   border-radius: var(--universal-border-radius);
   margin: var(--universal-margin);
   overflow: hidden;
+}
+
+#summary .card {
+  margin-bottom: var(--quad-margin);
+  /* border: 0.0625rem solid var(--card-border-color); */
 }
 
 @media screen and (min-width: 320px) {

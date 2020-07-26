@@ -44,7 +44,7 @@ func ParseArticle(r io.Reader) (*Article, error) {
 	if !dns1123Regexp.MatchString(name) {
 		return nil, fmt.Errorf("generated article name %q is not a DNS-safe string", name)
 	}
-	article.URL = fmt.Sprintf("/%s", name)
+	article.URL = fmt.Sprintf("/posts/%s", name)
 	article.FileName = fmt.Sprintf("%s.html", name)
 
 	// render HTML .Content

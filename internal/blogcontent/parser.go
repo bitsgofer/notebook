@@ -2,12 +2,17 @@ package blogcontent
 
 import (
 	"bytes"
+	"crypto/md5"
 	"fmt"
 	"io"
 	"io/ioutil"
 
 	yaml "gopkg.in/yaml.v3"
 	"k8s.io/klog/v2"
+)
+
+var (
+	dns1123Regexp = regexp.MustCompile(`^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`)
 )
 
 // ParseArticle parses a file into an Article.
@@ -28,6 +33,13 @@ func ParseArticle(r io.Reader) (*Article, error) {
 	if err := dec.Decode(&article.Metadata); err != nil {
 		return nil, fmt.Errorf("cannot unmarshal metadata (yaml); err= %w", err)
 	}
+
+	// set ID and URL
+	article.ID = md5.Sum([]byte(article.Metadata.Title))
+	if !dns1123Regexp.MatchString(article.Metadata.Title) {
+		return nil, fmt.Errorf("blog title is not a DNS-safe string")
+	}
+	article.URL = article.Metadata.Title
 
 	// render HTML content
 	html5Content, err := ToHTML(article.content)

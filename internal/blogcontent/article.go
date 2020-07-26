@@ -4,8 +4,8 @@ import "time"
 
 // Article includes both the blog post content as well as its metadata.
 type Article struct {
-	ID       string   // md5(content)
-	URL      string   // relative to blog root, based on ID
+	ID       string   // md5(.Metadata.Title)
+	URL      string   // relative to blog root, based .Metadata.Title
 	Metadata Metadata // format: yaml
 	content  []byte   // format: pandoc markdown
 	Content  string   // format: html5 (renderred from .content)
@@ -13,7 +13,7 @@ type Article struct {
 
 // Metadata includes other information like title, author, tags, summary, etc.
 type Metadata struct {
-	Title     string    `yaml:"title"`
+	Title     string    `yaml:"title"` // must be a DNS string in RFC1123
 	WrittenAt time.Time `yaml:"written_at"`
 	Author    User      `yaml:"author"`
 	Tags      []Tag     `yaml:"tags"`

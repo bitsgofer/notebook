@@ -1,11 +1,11 @@
 {{/* The value passed to this template is an Article struct */}}
 <div id="{{- .ID }}" class="card fluid"><!-- summary -->
-    <a href="{{- .URL }}"><h2 class="section double-padded">{{- .Title }}</h2></a>
+    <a href="{{- .URL }}"><h2 class="section double-padded">{{- .Metadata.Title }}</h2></a>
 
     <div class="section"><!-- summary content -->
 
         <!-- summary text -->
-        {{- .Summary.HTML }}
+        {{- .Summary }}
         <!-- summary text -->
 
         <a href="{{- .URL }}"><p>Read more...</p></a>

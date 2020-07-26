@@ -115,6 +115,8 @@ func TestParseArticle(t *testing.T) {
 		"valid": {
 			raw: blogPostValid,
 			wantArticle: &Article{
+				ID:  "f36b42dfe11ca4847b23fa6f42b53c30",
+				URL: "/stand-alone-complex",
 				Metadata: Metadata{
 					Title:     "Stand Alone Complex",
 					Author:    User("pusheen"),

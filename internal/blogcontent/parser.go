@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"regexp"
+	"strings"
 
 	yaml "gopkg.in/yaml.v3"
 	"k8s.io/klog/v2"
@@ -35,11 +37,13 @@ func ParseArticle(r io.Reader) (*Article, error) {
 	}
 
 	// set ID and URL
-	article.ID = md5.Sum([]byte(article.Metadata.Title))
-	if !dns1123Regexp.MatchString(article.Metadata.Title) {
-		return nil, fmt.Errorf("blog title is not a DNS-safe string")
+	hash := md5.Sum([]byte(article.Metadata.Title))
+	article.ID = fmt.Sprintf("%x", hash[:])
+	url := strings.ToLower(strings.ReplaceAll(article.Metadata.Title, " ", "-"))
+	if !dns1123Regexp.MatchString(url) {
+		return nil, fmt.Errorf("blog title %q is not a DNS-safe string", url)
 	}
-	article.URL = article.Metadata.Title
+	article.URL = fmt.Sprintf("/%s", url)
 
 	// render HTML content
 	html5Content, err := ToHTML(article.content)

@@ -1,4 +1,5 @@
-{{/* The value passed to this template is an Article struct */}}
+{{define "article"}}
+{{/* Pass an Article struct*/}}
 <div id="{{- .ID }}" class="card fluid"><!-- article -->
 	<h1 class="section double-padded">{{- .Metadata.Title }}</h1>
 
@@ -10,3 +11,4 @@
 
 	</div><!-- article content -->
 </div><!-- article -->
+{{end}}

@@ -2,20 +2,13 @@
 <html lang="en">
 
 
-
-<head>
-    <link rel="stylesheet" href="/builtin.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta charset="utf-8">
-    <title>Bitsgofer</title>
-</head>
-
+{{template "head" .}}
 
 
 <body>
 <div id="root">
-    <!-- ------------- header ------------- -->
-        {{template "header" .}}
+    <!-- ------------- menu ------------- -->
+        {{template "menu" .}}
     <!-- ------------- ****** ------------- -->
 
 
@@ -34,7 +27,7 @@
 </div><!-- id="root" -->
 
 
-<script type="text/javascript" src="/builtin.js"></script>
+{{template "script" .}}
 
 
 </body>

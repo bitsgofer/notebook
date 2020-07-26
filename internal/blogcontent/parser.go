@@ -37,14 +37,15 @@ func ParseArticle(r io.Reader) (*Article, error) {
 		return nil, fmt.Errorf("cannot unmarshal metadata (yaml); err= %w", err)
 	}
 
-	// set ID and URL
+	// set .ID, .URL and .FileName
 	hash := md5.Sum([]byte(article.Metadata.Title))
 	article.ID = fmt.Sprintf("%x", hash[:])
-	url := strings.ToLower(strings.ReplaceAll(article.Metadata.Title, " ", "-"))
-	if !dns1123Regexp.MatchString(url) {
-		return nil, fmt.Errorf("blog title %q is not a DNS-safe string", url)
+	name := strings.ToLower(strings.ReplaceAll(article.Metadata.Title, " ", "-"))
+	if !dns1123Regexp.MatchString(name) {
+		return nil, fmt.Errorf("generated article name %q is not a DNS-safe string", name)
 	}
-	article.URL = fmt.Sprintf("/%s", url)
+	article.URL = fmt.Sprintf("/%s", name)
+	article.FileName = fmt.Sprintf("%s.html", name)
 
 	// render HTML .Content
 	html5Content, err := ToHTML(article.content)

@@ -9,6 +9,7 @@ import (
 type Article struct {
 	ID       string        // md5(.Metadata.Title)
 	URL      string        // relative URL based on .Metadata.Title, follow RFC1123
+	FileName string        // name of html file
 	Metadata Metadata      // format: yaml
 	content  []byte        // format: pandoc markdown
 	Content  template.HTML // format: html5 (renderred from .content)

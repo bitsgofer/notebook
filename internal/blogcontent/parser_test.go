@@ -34,7 +34,11 @@ author: pusheen
 tags:
 - programming
 summary: |
-  blah blah
+  blah **blah**
+
+  - blah
+  - blah
+
   blah blah blah
 ----
 
@@ -122,8 +126,19 @@ func TestParseArticle(t *testing.T) {
 					Author:    User("pusheen"),
 					WrittenAt: mustParseRFC3339("2020-07-25T23:00:00Z"),
 					Tags:      []Tag{TagProgramming},
-					Summary: `blah blah
+					RawSummary: `blah **blah**
+
+- blah
+- blah
+
 blah blah blah
+`,
+					Summary: `<p>blah <strong>blah</strong></p>
+<ul>
+<li>blah</li>
+<li>blah</li>
+</ul>
+<p>blah blah blah</p>
 `,
 				},
 				content: []byte(`

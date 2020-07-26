@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/md5"
 	"fmt"
+	"html/template"
 	"io"
 	"io/ioutil"
 	"regexp"
@@ -45,12 +46,18 @@ func ParseArticle(r io.Reader) (*Article, error) {
 	}
 	article.URL = fmt.Sprintf("/%s", url)
 
-	// render HTML content
+	// render HTML .Content
 	html5Content, err := ToHTML(article.content)
 	if err != nil {
-		return nil, fmt.Errorf("cannot render markdown content as HTML5; err= %w", err)
+		return nil, fmt.Errorf("cannot render .Content as HTML5; err= %w", err)
 	}
-	article.Content = string(html5Content)
+	article.Content = template.HTML(html5Content)
+	// render HTML .Metadata.Summary
+	html5Content, err = ToHTML([]byte(article.Metadata.RawSummary))
+	if err != nil {
+		return nil, fmt.Errorf("cannot render .Metadata.RawSummary as HTML5; err= %w", err)
+	}
+	article.Metadata.Summary = template.HTML(html5Content)
 
 	return &article, nil
 }

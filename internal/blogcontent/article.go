@@ -1,23 +1,27 @@
 package blogcontent
 
-import "time"
+import (
+	"html/template"
+	"time"
+)
 
 // Article includes both the blog post content as well as its metadata.
 type Article struct {
-	ID       string   // md5(.Metadata.Title)
-	URL      string   // relative to blog root, based .Metadata.Title
-	Metadata Metadata // format: yaml
-	content  []byte   // format: pandoc markdown
-	Content  string   // format: html5 (renderred from .content)
+	ID       string        // md5(.Metadata.Title)
+	URL      string        // relative URL based on .Metadata.Title, follow RFC1123
+	Metadata Metadata      // format: yaml
+	content  []byte        // format: pandoc markdown
+	Content  template.HTML // format: html5 (renderred from .content)
 }
 
 // Metadata includes other information like title, author, tags, summary, etc.
 type Metadata struct {
-	Title     string    `yaml:"title"` // must be a DNS string in RFC1123
-	WrittenAt time.Time `yaml:"written_at"`
-	Author    User      `yaml:"author"`
-	Tags      []Tag     `yaml:"tags"`
-	Summary   string    `yaml:"summary"`
+	Title      string        `yaml:"title"`
+	WrittenAt  time.Time     `yaml:"written_at"`
+	Author     User          `yaml:"author"`
+	Tags       []Tag         `yaml:"tags"`
+	RawSummary string        `yaml:"summary"` // format: pandoc markdown, exported for Unmarshal
+	Summary    template.HTML `yaml:"-"`       // generated from .RawSummary
 }
 
 // User is the name of the user/writer.

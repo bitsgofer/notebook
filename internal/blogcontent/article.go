@@ -7,7 +7,8 @@ type Article struct {
 	ID       string   // md5(content)
 	URL      string   // relative to blog root, based on ID
 	Metadata Metadata // format: yaml
-	Content  []byte   // format: pandoc markdown
+	content  []byte   // format: pandoc markdown
+	Content  string   // format: html5 (renderred from .content)
 }
 
 // Metadata includes other information like title, author, tags, summary, etc.

@@ -50,6 +50,37 @@ All things change in a dynamic environment. Your effort to remain what you are i
 - Tachikoma 2`
 )
 
+func TestToHTML(t *testing.T) {
+	raw := `
+Stand Alone Complex
+===================
+
+Section 9
+---------
+
+All things change in a dynamic environment. Your effort to remain what you are is what limits you.
+
+- Tachikoma 1
+- Tachikoma 2`
+	wantHTML := `<h1 id="stand-alone-complex">Stand Alone Complex</h1>
+<h2 id="section-9">Section 9</h2>
+<p>All things change in a dynamic environment. Your effort to remain what you are is what limits you.</p>
+<ul>
+<li>Tachikoma 1</li>
+<li>Tachikoma 2</li>
+</ul>
+`
+
+	html, err := ToHTML([]byte(raw))
+	if err != nil {
+		t.Fatalf("want no error; got= %q", err)
+	}
+
+	if want, got := wantHTML, string(html); !cmp.Equal(want, got) {
+		t.Fatalf("wrong HTML output; diff= %s", cmp.Diff(want, got))
+	}
+}
+
 func mustParseRFC3339(str string) time.Time {
 	v, err := time.Parse(time.RFC3339, str)
 	if err != nil {
@@ -60,6 +91,10 @@ func mustParseRFC3339(str string) time.Time {
 }
 
 func TestParseArticle(t *testing.T) {
+	cmpOpts := []cmp.Option{
+		cmp.AllowUnexported(Article{}),
+	}
+
 	var testCases = map[string]struct {
 		raw         string
 		isErr       bool
@@ -89,7 +124,7 @@ func TestParseArticle(t *testing.T) {
 blah blah blah
 `,
 				},
-				Content: []byte(`
+				content: []byte(`
 
 Stand Alone Complex
 ===================
@@ -101,6 +136,14 @@ All things change in a dynamic environment. Your effort to remain what you are i
 
 - Tachikoma 1
 - Tachikoma 2`),
+				Content: `<h1 id="stand-alone-complex">Stand Alone Complex</h1>
+<h2 id="section-9">Section 9</h2>
+<p>All things change in a dynamic environment. Your effort to remain what you are is what limits you.</p>
+<ul>
+<li>Tachikoma 1</li>
+<li>Tachikoma 2</li>
+</ul>
+`,
 			},
 		},
 	}
@@ -120,8 +163,8 @@ All things change in a dynamic environment. Your effort to remain what you are i
 			default: // !tc.isErr && err == nil: // okay
 			}
 
-			if want, got := tc.wantArticle, article; !cmp.Equal(want, got) {
-				t.Fatalf("diff= %s", cmp.Diff(want, got))
+			if want, got := tc.wantArticle, article; !cmp.Equal(want, got, cmpOpts...) {
+				t.Fatalf("diff= %s", cmp.Diff(want, got, cmpOpts...))
 			}
 		})
 	}

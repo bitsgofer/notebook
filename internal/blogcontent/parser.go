@@ -10,10 +10,6 @@ import (
 	"k8s.io/klog/v2"
 )
 
-// Parser splits a blog post file into the medatadata and blog content.
-type Parser struct {
-}
-
 // ParseArticle parses a file into an Article.
 func ParseArticle(r io.Reader) (*Article, error) {
 	metadata, content, err := readFile(r)
@@ -22,7 +18,7 @@ func ParseArticle(r io.Reader) (*Article, error) {
 	}
 
 	article := Article{
-		Content: content,
+		content: content,
 	}
 
 	// unmarshal metadata
@@ -32,6 +28,13 @@ func ParseArticle(r io.Reader) (*Article, error) {
 	if err := dec.Decode(&article.Metadata); err != nil {
 		return nil, fmt.Errorf("cannot unmarshal metadata (yaml); err= %w", err)
 	}
+
+	// render HTML content
+	html5Content, err := ToHTML(article.content)
+	if err != nil {
+		return nil, fmt.Errorf("cannot render markdown content as HTML5; err= %w", err)
+	}
+	article.Content = string(html5Content)
 
 	return &article, nil
 }

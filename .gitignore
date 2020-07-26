@@ -1,2 +1,4 @@
 /build
 /public_html
+/.mk_state
+/dist

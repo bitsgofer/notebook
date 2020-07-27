@@ -27,17 +27,32 @@ endef
 # Phone targets: http://www.gnu.org/software/make/manual/make.html#Phony-Targets
 .PHONY: clean
 clean:
-	rm -rf bin
+	rm -rf .mk_state
 
+
+# $(GORELEASER) --snapshot --skip-publish --rm-dist
 
 .PHONY: test
+PKG=./...
+RUN=
+ifneq ("$(RUN)","")
+	_test_regex_flag=-run $(RUN)
+endif
 test:
-	$(GORELEASER) --snapshot --skip-publish --rm-dist
+	$(GO) test -cover -v -race ${IMPORT_PATH}/${PKG} ${_test_regex_flag}
+.PHONY: test
 
-# build:
-# 	$(GO) build -o bi
-# .PHONY build
-#
+
+.PHONY: vet
+vet:
+	$(GO) vet ${IMPORT_PATH}/...
+
+
+.PHONY: build
+build:
+	$(GO) build ${IMPORT_PATH}/${PKG}
+
+
 # PKG=./...
 # RUN=
 # ifneq ("$(RUN)","")

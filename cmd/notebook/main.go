@@ -8,6 +8,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/bitsgofer/notebook/internal/generate"
+	"github.com/bitsgofer/notebook/internal/server"
 )
 
 var (
@@ -23,9 +24,12 @@ var (
 
 	// server: run HTTP/HTTPS server for the static pages
 	serverCmd                = kingpin.Command("server", "Serve static blog")
-	serverEnableHTTPS        = serverCmd.Flag("https", "Use HTTPS instead of HTTP.").Default("true").Bool()
+	serverBlogRoot           = serverCmd.Flag("blog-root", "Blog root.").Default("newPublicHTML").String()
+	serverUseHTTPSOnly       = serverCmd.Flag("https", "Use HTTPS instead of HTTP.").Default("false").Bool()
 	serverLetsEncryptEmail   = serverCmd.Flag("admin-email", "Email used with Let's Encrypt.").Default("admin@example.com").String()
 	serverLetsEncryptDomains = serverCmd.Flag("domains", "(Multiple) domains used with Let's Encrypt.").Default("example.com", "www.example.com").Strings()
+	serverListenAddr         = serverCmd.Flag("listen-addr", "Server listen address (e.g: ':80', ':8080', ':443'.").Default(":8080").String()
+	serverMetricsPort        = serverCmd.Flag("metrics-port", "Port for Prometheus (/metrics) and pprof (/debug).").Default("14242").Int()
 )
 
 func fullPath(dir string) string {
@@ -61,7 +65,18 @@ func main() {
 		}
 
 	case "server":
-		klog.V(2).Infof("running: server; https= %t; email= %q; domains= %v", *serverEnableHTTPS, *serverLetsEncryptEmail, *serverLetsEncryptDomains)
+		cfg := server.Config{
+			BlogRoot:              *serverBlogRoot,
+			UseHTTPSOnly:          *serverUseHTTPSOnly,
+			LetsEncryptAdminEmail: *serverLetsEncryptEmail,
+			LetsEncryptDomains:    *serverLetsEncryptDomains,
+			ListenAddr:            *serverListenAddr,
+			MetricsPort:           *serverMetricsPort,
+		}
+		klog.V(2).Infof("running: server with config= %#v", cfg)
+
+		server := server.New(cfg)
+		server.Run()
 	}
 
 	fmt.Println("done")

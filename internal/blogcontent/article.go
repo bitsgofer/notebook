@@ -17,12 +17,12 @@ type Article struct {
 
 // Metadata includes other information like title, author, tags, summary, etc.
 type Metadata struct {
-	Title      string        `yaml:"title"`
-	WrittenAt  time.Time     `yaml:"written_at"`
-	Author     User          `yaml:"author"`
-	Tags       []Tag         `yaml:"tags"`
-	RawSummary string        `yaml:"summary"` // format: pandoc markdown, exported for Unmarshal
-	Summary    template.HTML `yaml:"-"`       // generated from .RawSummary
+	Title       string        `yaml:"title"`
+	PublishedAt time.Time     `yaml:"published"`
+	Author      User          `yaml:"author"`
+	Tags        []Tag         `yaml:"tags"`
+	RawSummary  string        `yaml:"summary"` // format: pandoc markdown, exported for Unmarshal
+	Summary     template.HTML `yaml:"-"`       // generated from .RawSummary
 }
 
 // User is the name of the user/writer.
@@ -33,8 +33,11 @@ type User string
 type Tag string
 
 const (
-	TagProgramming Tag = "programming"
-	TagGolang      Tag = "golang"
-	TagKubernetes  Tag = "kubernetes"
-	TagThoughts    Tag = "thoughts"
+	TagProgramming      Tag = "programming"
+	TagGolang           Tag = "golang"
+	TagKubernetes       Tag = "kubernetes"
+	TagThoughts         Tag = "thoughts"
+	TagDatabase         Tag = "database"
+	TagStreamProcessing Tag = "stream-processing"
+	TagBook             Tag = "book"
 )

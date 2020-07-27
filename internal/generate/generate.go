@@ -169,9 +169,18 @@ func generateHTML(postDir, outDir string, tmpls *blogTemplates) error {
 	}
 	indexPath := fmt.Sprintf("%s/%s", outDir, "index.html")
 	if err := renderToFile(tmpls.index, articles, indexPath); err != nil {
-		renderErrors = multierror.Append(renderErrors, err)
+		renderErrors = multierror.Append(renderErrors,
+			fmt.Errorf("cannot render index page; err= %w", err))
 	}
 	klog.V(2).Infof("rendered index page into %q", indexPath)
+
+	// create error page
+	errorPagePath := outDir + "/error.html"
+	if err := renderToFile(tmpls.errorPage, struct{}{}, errorPagePath); err != nil {
+		renderErrors = multierror.Append(renderErrors,
+			fmt.Errorf("cannot render error page; err= %w", err))
+	}
+	klog.V(2).Infof("rendered error page into %q", errorPagePath)
 
 	// need explicity check, otherwise (*multierror.Error)(nil) will be
 	// converted to a non-nil error
@@ -276,19 +285,26 @@ func generateAssets(assetsDir, outDir string) error {
 	if err := exec.Command("cp", assetsDir+"/favicon.ico", faviconOutPath).Run(); err != nil {
 		return fmt.Errorf("cannot create favicon; err= %w", err)
 	}
-	klog.V(2).Infof("copied favicon to %q", outDir+"/favicon.ico")
+	klog.V(2).Infof("copied favicon to %q", faviconOutPath)
+	errorPageImgOutPath := outDir + "/assets/error.jpg"
+	if err := exec.Command("cp", assetsDir+"/error.jpg", errorPageImgOutPath).Run(); err != nil {
+		return fmt.Errorf("cannot create error image; err= %w", err)
+	}
+	klog.V(2).Infof("copied error page image to %q", errorPageImgOutPath)
 
 	// copy images
-	imagesDir := outDir + "/images/"
-	if err := os.MkdirAll(imagesDir, os.ModeDir|0755); err != nil {
-		return fmt.Errorf("cannot create images dir; err= %w", err)
-	}
-	for _, path := range imageFiles {
-		if err := exec.Command("cp", path, imagesDir).Run(); err != nil {
-			return fmt.Errorf("cannot copy image %q; err= %w", path, err)
-		}
-		klog.V(2).Infof("copied image %q into %q", path, imagesDir)
-	}
+	// imagesDir := outDir + "/images/"
+	// if err := os.MkdirAll(imagesDir, os.ModeDir|0755); err != nil {
+	// 	return fmt.Errorf("cannot create images dir; err= %w", err)
+	// }
+	// for _, path := range imageFiles {
+	// 	if err := exec.Command("cp", path, assetsDir+"/"+path).Run(); err != nil {
+	// 		exitErr, _ := err.(*exec.ExitError)
+	// 		fmt.Printf("exitErr= %#v\n", exitErr)
+	// 		return fmt.Errorf("cannot copy image %q; err= %w", path, err)
+	// 	}
+	// 	klog.V(2).Infof("copied image %q into %q", path, assetsDir+"/"+path)
+	// }
 
 	return nil
 }

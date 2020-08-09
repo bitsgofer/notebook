@@ -1,11 +1,12 @@
----
 title: Materials about stream processing
-slug: materials-about-stream-processing
 author: mark
 published: 2019-06-01T00:00:00+08:00
 tags:
   - streaming
----
+summary: |
+  A collection of links to read about stream processing.
+
+----
 
 While I didn't sign up to work in data analytics (the business intelligence part),
 I got into learning about streaming through a different paths: billing and monitoring.

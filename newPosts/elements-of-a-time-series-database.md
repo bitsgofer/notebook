@@ -6,13 +6,10 @@ tags:
   - database
 summary: |
   This post is an attempt to deconstruct time series database to its components.
-
-  While preparing the docs for something similar at work, I felt that having an intro article to
-  time series database would be helpful. Hence this article was written.
-
-  It's mostly based on **Prometheus**.
-
 ----
+
+
+# Elements of a time series database
 
 This post is an attempt to deconstruct time series database to its components.
 While preparing the docs for something similar at work, I felt that having an intro article to

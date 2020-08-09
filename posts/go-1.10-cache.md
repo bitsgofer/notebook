@@ -1,11 +1,12 @@
----
-title: Go 1.10 build & test caching
-slug: go-1-10-build-and-test-caching
+title: Go 1 10 build and test caching
 author: mark
 published: 2018-04-25T00:00:00Z
 tags:
   - go
----
+summary: |
+  This article talks about the build and test cache since Go 1.10
+
+----
 
 Since I didn't read the release note for 1.10, I "accidentally" discovered a new feature in Go 1.10:
 build & test caching.

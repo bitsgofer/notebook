@@ -17,10 +17,10 @@ var (
 
 	// generate: create HTML from pandoc Markdown files
 	generateCmd          = kingpin.Command("generate", "Generate static blog.")
-	generatePostsDir     = generateCmd.Flag("post-dir", "Post directory.").Default(fullPath("newPosts")).String()
+	generatePostsDir     = generateCmd.Flag("post-dir", "Post directory.").Default(fullPath("posts")).String()
 	generateTemplatesDir = generateCmd.Flag("template-dir", "Templates directory.").Default(fullPath("templates")).String()
 	generateAssetsDir    = generateCmd.Flag("assets-dir", "Assets directory.").Default(fullPath("assets")).String()
-	generateOutputDir    = generateCmd.Flag("out-dir", "Directory for resulting HTML and assets.").Default(fullPath("newPublicHTML")).String()
+	generateOutputDir    = generateCmd.Flag("out-dir", "Directory for resulting HTML and assets.").Default(fullPath("public_html")).String()
 
 	// server: run HTTP/HTTPS server for the static pages
 	serverCmd                = kingpin.Command("server", "Serve static blog")

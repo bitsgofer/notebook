@@ -4,9 +4,6 @@ published: 2016-04-06T00:00:00Z
 tags:
   - books
   - papers
-summary: |
-  A bunch of non-technical books
-
 ----
 
 Good books

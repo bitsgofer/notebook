@@ -3,9 +3,6 @@ author: mark
 published: 2016-04-01T00:00:00Z
 tags:
   - books
-summary: |
-  A bunch of non-techincal books.
-
 ----
 
 Mostly harmless book :)

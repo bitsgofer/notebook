@@ -4,13 +4,10 @@ published: 2018-04-10T00:00:00Z
 tags:
   - programming
 summary: |
-  Recently, one of my colleagues tried to write the value `0.1` into `OpenTSDB` but
-  got `0.100000001490116` when querying it back.
-
-  It attempts to explain what's really "floating point numbers", from a programmer's
-  perspective.
-
+  Explaining floating point numbers
 ----
+
+
 
 Recently, one of my colleagues tried to write the value `0.1` into `OpenTSDB` but
 got `0.100000001490116` when querying it back.

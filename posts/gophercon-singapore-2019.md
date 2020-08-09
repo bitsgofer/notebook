@@ -1,11 +1,12 @@
----
 title: Summary and commentary on talks at Gophercon Singapore 2019
-slug: summary-and-commentary-gophercon-singapore-2019
 author: mark
 published: 2019-05-03T00:00:00Z
 tags:
   - programming, conference
----
+summary: |
+  Summary of talks from GopherCon Singapore 2019
+
+----
 
 > Disclaimer: This is a highly subjective summary and commentary on talks at Gophercon Singapore 2019.
 >

@@ -23,7 +23,7 @@ var minify string
 func init() {
 	path, err := exec.LookPath("minify")
 	if err != nil {
-		if os.IsNotExist(err) {
+		if strings.Contains(err.Error(), "executable file not found") {
 			klog.Errorf("minify not found, please install (e.g: go install github.com/tdewolff/minify/cmd/minify). Then make sure `which minify` works")
 			os.Exit(1)
 		}

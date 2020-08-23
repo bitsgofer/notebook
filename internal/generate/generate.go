@@ -318,7 +318,11 @@ type Config struct {
 }
 
 // Generate creates a clean static blog.
-func Generate(cfg Config) error {
+func Generate(cfg *Config) error {
+	if err := canonizeConfigAndValidate(cfg); err != nil {
+		return fmt.Errorf("invalid config; err= %w", err)
+	}
+
 	if err := os.RemoveAll(cfg.OutputDir); err != nil {
 		return fmt.Errorf("cannot remove %q; err= %w", cfg.OutputDir, err)
 	}
@@ -338,6 +342,34 @@ func Generate(cfg Config) error {
 	if err := generateAssets(cfg.AssetsDir, cfg.OutputDir); err != nil {
 		return fmt.Errorf("cannot generate assets; err= %w", err)
 	}
+
+	return nil
+}
+
+func canonizeConfigAndValidate(cfg *Config) error {
+	postsDirAbsPath, err := filepath.Abs(cfg.PostsDir)
+	if err != nil {
+		return fmt.Errorf("cannot get absolute path to .PostsDir; err= %w", err)
+	}
+	cfg.PostsDir = postsDirAbsPath
+
+	templatesDirAbsPath, err := filepath.Abs(cfg.TemplatesDir)
+	if err != nil {
+		return fmt.Errorf("cannot get absolute path to .PostsDir; err= %w", err)
+	}
+	cfg.TemplatesDir = templatesDirAbsPath
+
+	assetsDirAbsPath, err := filepath.Abs(cfg.AssetsDir)
+	if err != nil {
+		return fmt.Errorf("cannot get absolute path to .PostsDir; err= %w", err)
+	}
+	cfg.AssetsDir = assetsDirAbsPath
+
+	outputDirAbsPath, err := filepath.Abs(cfg.OutputDir)
+	if err != nil {
+		return fmt.Errorf("cannot get absolute path to .PostsDir; err= %w", err)
+	}
+	cfg.OutputDir = outputDirAbsPath
 
 	return nil
 }

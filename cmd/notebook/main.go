@@ -33,6 +33,14 @@ var (
 	serverMetricsPort        = serverCmd.Flag("metrics-port", "Port for Prometheus (/metrics) and pprof (/debug).").Default("14242").Int()
 )
 
+func init() {
+	if err := checkDependencies(); err != nil {
+		klog.Errorf("dependecies not met; err= %q", err)
+		os.Exit(1)
+	}
+
+}
+
 func main() {
 	cmd := kingpin.Parse()
 
@@ -41,11 +49,6 @@ func main() {
 	// Obviously klog doesn't fit with kinpin :P
 	klogVLevel := klog.Level(0)
 	(&klogVLevel).Set(*klogV)
-
-	if err := checkDependencies(); err != nil {
-		klog.Errorf("dependecies not met; err= %q", err)
-		os.Exit(1)
-	}
 
 	switch cmd {
 	case "generate":

@@ -26,9 +26,9 @@ var (
 	serverCmd                = kingpin.Command("server", "Serve static blog")
 	serverBlogRoot           = serverCmd.Flag("blog-root", "Blog root.").Default("newPublicHTML").String()
 	serverUseHTTPSOnly       = serverCmd.Flag("https", "Use HTTPS instead of HTTP.").Default("false").Bool()
-	serverLetsEncryptEmail   = serverCmd.Flag("admin-email", "Email used with Let's Encrypt.").Default("admin@example.com").String()
-	serverLetsEncryptDomains = serverCmd.Flag("domains", "(Multiple) domains used with Let's Encrypt.").Default("example.com", "www.example.com").Strings()
-	serverListenAddr         = serverCmd.Flag("listen-addr", "Server listen address (e.g: ':80', ':8080', ':443'.").Default(":8080").String()
+	serverLetsEncryptEmail   = serverCmd.Flag("email", "Email for Let's Encrypt.").Default("ssl-admin@my.blog").String()
+	serverLetsEncryptDomains = serverCmd.Flag("domains", "Domains used with Let's Encrypt.").Default("my.blog").Strings()
+	serverInsecureHTTPAddr   = serverCmd.Flag("insecure-http-addr", "Listen address for HTTP (for local development)").Default(":8080").String()
 	serverMetricsPort        = serverCmd.Flag("metrics-port", "Port for Prometheus (/metrics) and pprof (/debug).").Default("14242").Int()
 )
 
@@ -66,16 +66,19 @@ func main() {
 
 	case "server":
 		cfg := server.Config{
-			BlogRoot:              *serverBlogRoot,
-			UseHTTPSOnly:          *serverUseHTTPSOnly,
-			LetsEncryptAdminEmail: *serverLetsEncryptEmail,
-			LetsEncryptDomains:    *serverLetsEncryptDomains,
-			ListenAddr:            *serverListenAddr,
-			MetricsPort:           *serverMetricsPort,
+			BlogRoot:               *serverBlogRoot,
+			UseHTTPSOnly:           *serverUseHTTPSOnly,
+			LetsEncryptAdminEmail:  *serverLetsEncryptEmail,
+			LetsEncryptDomains:     *serverLetsEncryptDomains,
+			InsecureHTTPListenAddr: *serverInsecureHTTPAddr,
+			MetricsPort:            *serverMetricsPort,
 		}
 		klog.V(2).Infof("running: server with config= %#v", cfg)
 
-		server := server.New(cfg)
+		server, err := server.New(&cfg)
+		if err != nil {
+			klog.Fatalf("cannot create server; err= %q", err)
+		}
 		server.Run()
 	}
 

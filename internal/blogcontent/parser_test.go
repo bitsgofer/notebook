@@ -29,7 +29,7 @@ blah blah`  // no usable metadata
 blah blah`
 	blogPostValid = `
 title: Stand Alone Complex
-written_at: 2020-07-25T23:00:00Z
+published: 2020-07-25T23:00:00Z
 author: pusheen
 tags:
 - programming
@@ -52,6 +52,18 @@ All things change in a dynamic environment. Your effort to remain what you are i
 
 - Tachikoma 1
 - Tachikoma 2`
+	blogPostValidWithSlug = `
+title: Stand Alone Complex
+slug: ghost-in-the-shell-sac
+published: 2020-07-25T23:00:00Z
+author: pusheen
+tags:
+- programming
+summary: |
+  blah
+----
+
+Stand Alone Complex`
 )
 
 func TestToHTML(t *testing.T) {
@@ -120,13 +132,14 @@ func TestParseArticle(t *testing.T) {
 			raw: blogPostValid,
 			wantArticle: &Article{
 				ID:       "f36b42dfe11ca4847b23fa6f42b53c30",
-				URL:      "/stand-alone-complex",
+				URL:      "/posts/stand-alone-complex",
 				FileName: "stand-alone-complex.html",
 				Metadata: Metadata{
-					Title:     "Stand Alone Complex",
-					Author:    User("pusheen"),
-					WrittenAt: mustParseRFC3339("2020-07-25T23:00:00Z"),
-					Tags:      []Tag{TagProgramming},
+					Title:       "Stand Alone Complex",
+					Slug:        "stand-alone-complex",
+					Author:      User("pusheen"),
+					PublishedAt: mustParseRFC3339("2020-07-25T23:00:00Z"),
+					Tags:        []Tag{TagProgramming},
 					RawSummary: `blah **blah**
 
 - blah
@@ -161,6 +174,30 @@ All things change in a dynamic environment. Your effort to remain what you are i
 <li>Tachikoma 1</li>
 <li>Tachikoma 2</li>
 </ul>
+`,
+			},
+		},
+		"valid-with-slug": {
+			raw: blogPostValidWithSlug,
+			wantArticle: &Article{
+				ID:       "f36b42dfe11ca4847b23fa6f42b53c30",
+				URL:      "/posts/ghost-in-the-shell-sac",
+				FileName: "ghost-in-the-shell-sac.html",
+				Metadata: Metadata{
+					Title:       "Stand Alone Complex",
+					Slug:        "ghost-in-the-shell-sac",
+					Author:      User("pusheen"),
+					PublishedAt: mustParseRFC3339("2020-07-25T23:00:00Z"),
+					Tags:        []Tag{TagProgramming},
+					RawSummary: `blah
+`,
+					Summary: `<p>blah</p>
+`,
+				},
+				content: []byte(`
+
+Stand Alone Complex`),
+				Content: `<p>Stand Alone Complex</p>
 `,
 			},
 		},

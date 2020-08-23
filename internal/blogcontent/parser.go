@@ -40,12 +40,18 @@ func ParseArticle(r io.Reader) (*Article, error) {
 	// set .ID, .URL and .FileName
 	hash := md5.Sum([]byte(article.Metadata.Title))
 	article.ID = fmt.Sprintf("%x", hash[:])
-	name := strings.ToLower(strings.ReplaceAll(article.Metadata.Title, " ", "-"))
-	if !dns1123Regexp.MatchString(name) {
-		return nil, fmt.Errorf("generated article name %q is not a DNS-safe string", name)
+	var slug string
+	if len(article.Metadata.Slug) > 0 {
+		slug = article.Metadata.Slug
+	} else {
+		slug = strings.ToLower(strings.ReplaceAll(article.Metadata.Title, " ", "-"))
+		article.Metadata.Slug = slug
 	}
-	article.URL = fmt.Sprintf("/posts/%s", name)
-	article.FileName = fmt.Sprintf("%s.html", name)
+	if !dns1123Regexp.MatchString(slug) {
+		return nil, fmt.Errorf("generated article slug %q is not a DNS-safe string", slug)
+	}
+	article.URL = fmt.Sprintf("/posts/%s", slug)
+	article.FileName = fmt.Sprintf("%s.html", slug)
 
 	// render HTML .Content
 	html5Content, err := ToHTML(article.content)

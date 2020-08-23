@@ -8,7 +8,7 @@ import (
 // Article includes both the blog post content as well as its metadata.
 type Article struct {
 	ID       string        // md5(.Metadata.Title)
-	URL      string        // relative URL based on .Metadata.Title, follow RFC1123
+	URL      string        // .Metadata.Slug or generated from .Metadata.Title
 	FileName string        // name of html file
 	Metadata Metadata      // format: yaml
 	content  []byte        // format: pandoc markdown
@@ -18,6 +18,7 @@ type Article struct {
 // Metadata includes other information like title, author, tags, summary, etc.
 type Metadata struct {
 	Title       string        `yaml:"title"`
+	Slug        string        `yaml:"slug"` // RFC1123-friendly path (from the WordPress age)
 	PublishedAt time.Time     `yaml:"published"`
 	Author      User          `yaml:"author"`
 	Tags        []Tag         `yaml:"tags"`

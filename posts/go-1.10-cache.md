@@ -1,4 +1,5 @@
-title: Go 1 10 build and test caching
+title: Go 1.10 build and test caching
+slug: go-1-10-build-and-test-caching
 author: mark
 published: 2018-04-25T00:00:00Z
 tags:

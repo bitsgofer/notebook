@@ -155,6 +155,7 @@ func (srv *Server) serveHTTPSWithACME() {
 	}()
 
 	// blog is served on :443
+	srv.httpServer.Addr = ":https" // override the default (.cfg.InsecureHTTPListenAddr)
 	if err := srv.httpServer.ListenAndServeTLS(":https", ""); err != nil {
 		klog.Fatalf("HTTPS server failed; err= %q", err)
 	}

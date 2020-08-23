@@ -17,6 +17,11 @@ var pandoc string
 func init() {
 	path, err := exec.LookPath("pandoc")
 	if err != nil {
+		if os.IsNotExist(err) {
+			klog.Errorf("pandoc not found, please install (e.g: sudo apt-get install pandoc). Then make sure `which pandoc` works")
+			os.Exit(1)
+		}
+
 		klog.Fatalf("cannot find pandoc; err= %q", err)
 	}
 

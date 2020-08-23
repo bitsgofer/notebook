@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"os/exec"
 
 	"gopkg.in/alecthomas/kingpin.v2"
 	"k8s.io/klog/v2"
@@ -32,14 +30,6 @@ var (
 	serverInsecureHTTPAddr   = serverCmd.Flag("insecure-http-addr", "Listen address for HTTP (for local development)").Default(":8080").String()
 	serverMetricsPort        = serverCmd.Flag("metrics-port", "Port for Prometheus (/metrics) and pprof (/debug).").Default("14242").Int()
 )
-
-func init() {
-	if err := checkDependencies(); err != nil {
-		klog.Errorf("dependecies not met; err= %q", err)
-		os.Exit(1)
-	}
-
-}
 
 func main() {
 	cmd := kingpin.Parse()
@@ -83,16 +73,4 @@ func main() {
 	}
 
 	fmt.Println("done")
-}
-
-func checkDependencies() error {
-	if _, err := exec.LookPath("pandoc"); os.IsNotExist(err) {
-		return fmt.Errorf("pandoc not found, please install (e.g: sudo apt-get install pandoc). Then make sure `which pandoc` works")
-	}
-
-	if _, err := exec.LookPath("minify"); os.IsNotExist(err) {
-		return fmt.Errorf("minify not found, please install (e.g: go install github.com/tdewolff/minify/cmd/minify). Then make sure `which minify` works")
-	}
-
-	return nil
 }

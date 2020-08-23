@@ -18,6 +18,23 @@ import (
 	"github.com/bitsgofer/notebook/internal/blogcontent"
 )
 
+var minify string
+
+func init() {
+	path, err := exec.LookPath("minify")
+	if err != nil {
+		if os.IsNotExist(err) {
+			klog.Errorf("minify not found, please install (e.g: go install github.com/tdewolff/minify/cmd/minify). Then make sure `which minify` works")
+			os.Exit(1)
+		}
+
+		klog.Fatalf("cannot find minify; err= %q", err)
+	}
+
+	klog.V(4).Infof("minify's full path= %q", path)
+	minify = path
+}
+
 // blogTemplates templates for rendering different type of pages
 // (e.g: single-article, index, etc).
 type blogTemplates struct {
@@ -193,13 +210,6 @@ func generateHTML(postDir, outDir string, tmpls *blogTemplates) error {
 // generateAssets prepares non-HTML content (CSS, JS, etc) for the blog.
 // For CSS and JS, it will combine all files into one minified file.
 func generateAssets(assetsDir, outDir string) error {
-	const minifyCommand = "minify"
-	minify, err := exec.LookPath(minifyCommand)
-	if err != nil {
-		return fmt.Errorf("cannot find full path for %q; err= %q", minifyCommand, err)
-	}
-	klog.V(4).Infof("%q's full path= %q", minifyCommand, minify)
-
 	// minifyToFile combines and minify multiple CSS/JS files into one file.
 	minifyToFile := func(outPath string, files ...string) error {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

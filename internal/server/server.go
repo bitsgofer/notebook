@@ -110,7 +110,7 @@ func (srv *Server) contentHandler() *http.ServeMux {
 		}
 
 		filePath := srv.cfg.BlogRoot + srv.findFileFromRequestPath(r)
-		b, err := ioutil.ReadFile(filePath)
+		_, err := os.Stat(filePath)
 		if err != nil {
 			if os.IsNotExist(err) {
 				srv.errHandlerFunc(http.StatusNotFound)(w, r)
@@ -123,8 +123,7 @@ func (srv *Server) contentHandler() *http.ServeMux {
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
-		w.Write(b)
+		http.ServeFile(w, r, filePath)
 		klog.V(2).Infof("served file %q", filePath)
 	}
 

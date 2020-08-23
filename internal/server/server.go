@@ -23,14 +23,11 @@ type Config struct {
 	MetricsPort            int    // port for Prometheus metrics + pprof
 }
 
-type errHandler func(statusCode int) http.Handler
-
+// Server wraps config, ACME autocert manager and httpServer for static files.
 type Server struct {
 	cfg             *Config
 	autocertManager *autocert.Manager
 	httpServer      *http.Server
-
-	// serveErr errHandler
 }
 
 func New(cfg *Config) (*Server, error) {
@@ -45,20 +42,27 @@ func New(cfg *Config) (*Server, error) {
 		Email:       cfg.LetsEncryptAdminEmail,
 		RenewBefore: 30 * 24 * time.Hour,
 	}
-
+	httpServer := &http.Server{
+		Addr:      cfg.InsecureHTTPListenAddr,
+		TLSConfig: manager.TLSConfig(),
+	}
 	srv := &Server{
 		cfg:             cfg,
 		autocertManager: &manager,
+		httpServer:      httpServer,
 	}
-
-	httpServer := &http.Server{
-		Addr:      cfg.InsecureHTTPListenAddr,
-		Handler:   srv.contentHandler(),
-		TLSConfig: manager.TLSConfig(),
-	}
-	srv.httpServer = httpServer
+	srv.httpServer.Handler = srv.contentHandler()
 
 	return srv, nil
+}
+
+func (srv *Server) Run() {
+	if srv.cfg.UseHTTPSOnly {
+		srv.serveHTTPSWithACME()
+		return
+	}
+
+	srv.serveHTTPInsecure()
 }
 
 // canonizeConfigAndValidate validate the given *Config.
@@ -72,6 +76,22 @@ func canonizeConfigAndValidate(cfg *Config) error {
 	cfg.BlogRoot = blogRootAbsPath
 	klog.V(4).Infof(".BlogRoot= %q", cfg.BlogRoot)
 
+	if _, err := os.Stat(cfg.BlogRoot); os.IsNotExist(err) {
+		return fmt.Errorf(".BlogRoot does not exist")
+	}
+
+	if !cfg.UseHTTPSOnly {
+		return nil
+	}
+
+	// additional checks if using HTTPS
+	if len(cfg.LetsEncryptDomains) < 1 {
+		return fmt.Errorf("need to have at least one domain for the Let's Encrypt to issue certificate (e.g: the blog domain")
+	}
+	if len(cfg.LetsEncryptAdminEmail) < 1 {
+		return fmt.Errorf("need to specify admin email for Let's Encrypt")
+	}
+
 	return nil
 }
 
@@ -84,8 +104,8 @@ func (srv *Server) errHandlerFunc(statusCode int) http.HandlerFunc {
 			klog.Fatalf("cannot load error file %q; err= %q", filePath, err)
 		}
 
-		const placeholderCode = "PlaceholderStatusCode"
-		const placeholderMsg = "PlaceholderErrorMessage"
+		const placeholderCode = "HTTPStatusCode"
+		const placeholderMsg = "ErrorMessageForHTTPStatusCode"
 		realStatusCode := fmt.Sprintf("%d", statusCode)
 		realErrorMsg := http.StatusText(statusCode)
 		b = bytes.Replace(b, []byte(placeholderCode), []byte(realStatusCode), 1)
@@ -101,14 +121,24 @@ func (srv *Server) errHandlerFunc(statusCode int) http.HandlerFunc {
 //
 // The chain of HTTP handlers (i.e "HTTP middlewares") (e.g: metrics, logging, gzip, etc)
 // should be specified here, too.
-func (srv *Server) contentHandler() *http.ServeMux {
-	handler := func(w http.ResponseWriter, r *http.Request) {
+func (srv *Server) contentHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			srv.errHandlerFunc(http.StatusNotImplemented)(w, r)
 			klog.Errorf("a %s request was received (not supported)", r.Method)
 			return
 		}
 
+		// if we panic while serving, try to serve an 500 page
+		defer func() {
+			recoveredErr := recover()
+			if recoveredErr != nil {
+				srv.errHandlerFunc(http.StatusInternalServerError)(w, r)
+				klog.Errorf("caught a panic; err= %q", recoveredErr)
+			}
+		}()
+
+		// find file to serve from request path
 		filePath := srv.cfg.BlogRoot + srv.findFileFromRequestPath(r)
 		_, err := os.Stat(filePath)
 		if err != nil {
@@ -123,21 +153,17 @@ func (srv *Server) contentHandler() *http.ServeMux {
 			return
 		}
 
+		// serve it
 		http.ServeFile(w, r, filePath)
 		klog.V(2).Infof("served file %q", filePath)
 	}
-
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", handler)
-	return mux
 }
 
 // serveHTTPInsecure listens to HTTP request on .Config.HTTPListenAddr and serve
 // static files.
 func (srv *Server) serveHTTPInsecure() {
 	if err := srv.httpServer.ListenAndServe(); err != nil {
-		fmt.Fprintln(os.Stderr, fmt.Errorf("blog server failed; err= %w", err))
-		os.Exit(1)
+		klog.Fatalf("HTTP server failed; err= %q", err)
 	}
 }
 
@@ -158,15 +184,6 @@ func (srv *Server) serveHTTPSWithACME() {
 	if err := srv.httpServer.ListenAndServeTLS("", ""); err != nil {
 		klog.Fatalf("HTTPS server failed; err= %q", err)
 	}
-}
-
-func (srv *Server) Run() {
-	if srv.cfg.UseHTTPSOnly {
-		srv.serveHTTPSWithACME()
-		return
-	}
-
-	srv.serveHTTPInsecure()
 }
 
 // findFileFromRequestPath returns the static file to serve based on the request's path.

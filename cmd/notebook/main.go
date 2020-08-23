@@ -23,7 +23,7 @@ var (
 
 	// server: run HTTP/HTTPS server for the static pages
 	serverCmd                = kingpin.Command("server", "Serve static blog")
-	serverBlogRoot           = serverCmd.Flag("blog-root", "Blog root.").Default("newPublicHTML").String()
+	serverBlogRoot           = serverCmd.Flag("blog-root", "Blog root.").Default("public_html").String()
 	serverUseHTTPSOnly       = serverCmd.Flag("https", "Use HTTPS instead of HTTP.").Default("false").Bool()
 	serverLetsEncryptEmail   = serverCmd.Flag("email", "Email for Let's Encrypt (e.g: ssl-admin@my.blog).").Default("").String()
 	serverLetsEncryptDomains = serverCmd.Flag("domains", "Domains used with Let's Encrypt (e.g: my.blog).").Default("").Strings()

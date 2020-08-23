@@ -2,6 +2,7 @@ package blogcontent
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -17,7 +18,7 @@ var pandoc string
 func init() {
 	path, err := exec.LookPath("pandoc")
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, os.ErrNotExist) {
 			klog.Errorf("pandoc not found, please install (e.g: sudo apt-get install pandoc). Then make sure `which pandoc` works")
 			os.Exit(1)
 		}

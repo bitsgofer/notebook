@@ -98,8 +98,12 @@ func loadTemplates(templateDir string) (*blogTemplates, error) {
 
 // generateHTML walks the <postDir> and convert each (pandoc) markdown files
 // into HTML5.
-func generateHTML(postDir, outDir string, tmpls *blogTemplates) error {
+func generateHTML(postDir, outDir string, tmpls *blogTemplates, cssBytes, jsBytes []byte) error {
 	var renderErrors *multierror.Error
+
+	// stringify the CSS and JS bytes for rendering later
+	css := template.CSS(cssBytes)
+	js := template.JS(jsBytes)
 
 	// create folder for posts (/posts/*.html)
 	postsOutPath := outDir + "/posts"
@@ -168,7 +172,18 @@ func generateHTML(postDir, outDir string, tmpls *blogTemplates) error {
 
 		// render to <postsOutPath>/<.Metadata.FileName>
 		outPath := fmt.Sprintf("%s/%s", postsOutPath, article.FileName)
-		if err := renderToFile(tmpls.singleArticle, article, outPath); err != nil {
+		// wrap an Article together with CSS and JS for rendering
+		type wrapper struct {
+			Article *blogcontent.Article
+			CSS     template.CSS
+			JS      template.JS
+		}
+		wrapped := wrapper{
+			Article: article,
+			CSS:     css,
+			JS:      js,
+		}
+		if err := renderToFile(tmpls.singleArticle, wrapped, outPath); err != nil {
 			renderErrors = multierror.Append(renderErrors, err)
 			return nil
 		}
@@ -185,7 +200,19 @@ func generateHTML(postDir, outDir string, tmpls *blogTemplates) error {
 		return fmt.Errorf("cannot render artiles; err= %w", err)
 	}
 	indexPath := fmt.Sprintf("%s/%s", outDir, "index.html")
-	if err := renderToFile(tmpls.index, articles, indexPath); err != nil {
+	// wrap multiple Articles together with CSS and JS for rendering
+	type wrapper struct {
+		Articles []*blogcontent.Article
+		CSS      template.CSS
+		JS       template.JS
+	}
+	wrapped := wrapper{
+		Articles: articles,
+		CSS:      css,
+		JS:       js,
+	}
+
+	if err := renderToFile(tmpls.index, wrapped, indexPath); err != nil {
 		renderErrors = multierror.Append(renderErrors,
 			fmt.Errorf("cannot render index page; err= %w", err))
 	}
@@ -193,7 +220,11 @@ func generateHTML(postDir, outDir string, tmpls *blogTemplates) error {
 
 	// create error page
 	errorPagePath := outDir + "/error.html"
-	if err := renderToFile(tmpls.errorPage, struct{}{}, errorPagePath); err != nil {
+	noContent := wrapper{
+		CSS: css,
+		JS:  js,
+	}
+	if err := renderToFile(tmpls.errorPage, noContent, errorPagePath); err != nil {
 		renderErrors = multierror.Append(renderErrors,
 			fmt.Errorf("cannot render error page; err= %w", err))
 	}
@@ -209,7 +240,11 @@ func generateHTML(postDir, outDir string, tmpls *blogTemplates) error {
 
 // generateAssets prepares non-HTML content (CSS, JS, etc) for the blog.
 // For CSS and JS, it will combine all files into one minified file.
-func generateAssets(assetsDir, outDir string) error {
+//
+// We also return the minified CSS and JS bytes to be included in each HTML file,
+// instead of loading them separately. This will speed up page load.
+// REF: https://web.dev/render-blocking-resources
+func generateAssets(assetsDir, outDir string) (cssBytes, jsBytes []byte, err error) {
 	// minifyToFile combines and minify multiple CSS/JS files into one file.
 	minifyToFile := func(outPath string, files ...string) error {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -275,48 +310,44 @@ func generateAssets(assetsDir, outDir string) error {
 		return nil
 	}
 	if err := filepath.Walk(assetsDir, walkFn); err != nil {
-		return fmt.Errorf("cannot find CSS and JS files; err= %w", err)
+		return nil, nil, fmt.Errorf("cannot find CSS and JS files; err= %w", err)
 	}
 
 	// create minified CSS + JS + favicon
 	assetsOutPath := outDir + "/assets"
 	if err := os.MkdirAll(assetsOutPath, os.ModeDir|0755); err != nil {
-		return fmt.Errorf("cannot create assets dir; err= %w", err)
+		return nil, nil, fmt.Errorf("cannot create assets dir; err= %w", err)
 	}
 	cssOutPath := outDir + "/assets/notebook.css"
 	if err := minifyToFile(cssOutPath, cssFiles...); err != nil {
-		return fmt.Errorf("cannot minfy CSS files; err= %w", err)
+		return nil, nil, fmt.Errorf("cannot minfy CSS files; err= %w", err)
 	}
 	jsOutPath := outDir + "/assets/notebook.js"
 	if err := minifyToFile(jsOutPath, jsFiles...); err != nil {
-		return fmt.Errorf("cannot minify JS files; err= %w", err)
+		return nil, nil, fmt.Errorf("cannot minify JS files; err= %w", err)
 	}
 	faviconOutPath := outDir + "/assets/favicon.ico"
 	if err := exec.Command("cp", assetsDir+"/favicon.ico", faviconOutPath).Run(); err != nil {
-		return fmt.Errorf("cannot create favicon; err= %w", err)
+		return nil, nil, fmt.Errorf("cannot create favicon; err= %w", err)
 	}
 	klog.V(2).Infof("copied favicon to %q", faviconOutPath)
 	errorPageImgOutPath := outDir + "/assets/error.jpg"
 	if err := exec.Command("cp", assetsDir+"/error.jpg", errorPageImgOutPath).Run(); err != nil {
-		return fmt.Errorf("cannot create error image; err= %w", err)
+		return nil, nil, fmt.Errorf("cannot create error image; err= %w", err)
 	}
 	klog.V(2).Infof("copied error page image to %q", errorPageImgOutPath)
 
-	// copy images
-	// imagesDir := outDir + "/images/"
-	// if err := os.MkdirAll(imagesDir, os.ModeDir|0755); err != nil {
-	// 	return fmt.Errorf("cannot create images dir; err= %w", err)
-	// }
-	// for _, path := range imageFiles {
-	// 	if err := exec.Command("cp", path, assetsDir+"/"+path).Run(); err != nil {
-	// 		exitErr, _ := err.(*exec.ExitError)
-	// 		fmt.Printf("exitErr= %#v\n", exitErr)
-	// 		return fmt.Errorf("cannot copy image %q; err= %w", path, err)
-	// 	}
-	// 	klog.V(2).Infof("copied image %q into %q", path, assetsDir+"/"+path)
-	// }
+	// read the minified CSS and JS bytes
+	cssBytes, err = ioutil.ReadFile(cssOutPath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("cannot read minified CSS file; err= %w", err)
+	}
+	jsBytes, err = ioutil.ReadFile(jsOutPath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("cannot read minified JS file; err= %w", err)
+	}
 
-	return nil
+	return cssBytes, jsBytes, nil
 }
 
 // Config contains configurations to generate static blog.
@@ -345,12 +376,13 @@ func Generate(cfg *Config) error {
 		return fmt.Errorf("cannot load templates; err= %w", err)
 	}
 
-	if err := generateHTML(cfg.PostsDir, cfg.OutputDir, templates); err != nil {
-		return fmt.Errorf("cannot generate articles; err= %w", err)
+	cssBytes, jsBytes, err := generateAssets(cfg.AssetsDir, cfg.OutputDir)
+	if err != nil {
+		return fmt.Errorf("cannot generate assets; err= %w", err)
 	}
 
-	if err := generateAssets(cfg.AssetsDir, cfg.OutputDir); err != nil {
-		return fmt.Errorf("cannot generate assets; err= %w", err)
+	if err := generateHTML(cfg.PostsDir, cfg.OutputDir, templates, cssBytes, jsBytes); err != nil {
+		return fmt.Errorf("cannot generate articles; err= %w", err)
 	}
 
 	return nil

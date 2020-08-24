@@ -15,8 +15,8 @@
     <div class="row" id="doc-wrapper">
         <main class="col-sm-12 col-md-12 col-lg-6 col-lg-offset-3">
             <div id="summary">
-            {{range $index, $article := .}}
-                {{template "articleSummary" .}}
+            {{range $article := .Articles}}
+                {{template "articleSummary" $article}}
             {{end}}
             <div><!-- id="summary" -->
 

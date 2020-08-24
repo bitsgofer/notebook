@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"compress/gzip"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	gorillahandlers "github.com/gorilla/handlers"
 	"golang.org/x/crypto/acme/autocert"
 	"k8s.io/klog/v2"
 )
@@ -51,7 +53,14 @@ func New(cfg *Config) (*Server, error) {
 		autocertManager: &manager,
 		httpServer:      httpServer,
 	}
-	srv.httpServer.Handler = srv.contentHandler()
+
+	// The chain of HTTP handlers (i.e "HTTP middlewares") (e.g: metrics, logging, gzip, etc)
+	// should be specified here.
+	var handler http.Handler
+	handler = srv.contentHandler()
+	handler = gorillahandlers.CompressHandlerLevel(handler, gzip.BestCompression)
+	handler = setCacheHeaderHandler(handler)
+	srv.httpServer.Handler = handler
 
 	return srv, nil
 }
@@ -118,9 +127,6 @@ func (srv *Server) errHandlerFunc(statusCode int) http.HandlerFunc {
 
 // contentHandler returns the blog content handler, which should take care
 // of all request that are not ACME's HTTP-01 challenge (https://letsencrypt.org/docs/challenge-types/#http-01-challenge).
-//
-// The chain of HTTP handlers (i.e "HTTP middlewares") (e.g: metrics, logging, gzip, etc)
-// should be specified here, too.
 func (srv *Server) contentHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
@@ -157,6 +163,25 @@ func (srv *Server) contentHandler() http.HandlerFunc {
 		http.ServeFile(w, r, filePath)
 		klog.V(2).Infof("served file %q", filePath)
 	}
+}
+
+func setCacheHeaderHandler(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
+		if path == "/" {
+			path = "/index.html"
+		}
+
+		switch strings.ToLower(filepath.Ext(r.URL.Path)) {
+		case ".css",
+			".js",
+			".ico",
+			".jpg", ".jpeg", ".gif", ".png", ".svg":
+			w.Header().Set("Cache-Control", "public, max-age=604800, immutable")
+		}
+
+		h.ServeHTTP(w, r)
+	})
 }
 
 // serveHTTPInsecure listens to HTTP request on .Config.HTTPListenAddr and serve
